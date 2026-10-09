@@ -1,18 +1,75 @@
-/**
- * Main entry point for the physics simulation viewer.
- * Initializes the Three.js render loop and starts playback.
- */
-import { scene, camera, renderer, controls } from './scene.js';
-import './controls.js';
-import { step } from './playback.js';
+// Entry point: wires the modules together through the event bus and loads the first scene.
+import { app, on, emit } from './state.js';
+import { getJson } from './api.js';
+import { newScene } from './model.js';
+import { toast } from './toast.js';
+import { rebuild, highlight } from './sceneView.js';
+import { attachGizmo } from './editor.js';
+import { render as renderOutliner } from './outliner.js';
+import { render as renderInspector } from './inspector.js';
+import { refreshSceneList, loadScene, setScene } from './toolbar.js';
+import './simClient.js';
+import './robotPanel.js';
+import './playback.js';
 
-// Animation loop
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
+const statusMode = document.getElementById('status-mode');
+const statusSel = document.getElementById('status-sel');
+const statusBackend = document.getElementById('status-backend');
+
+// every uncaught error ends up visible as a toast (and in the console with its stack)
+window.addEventListener('error', (e) => toast(e.message));
+window.addEventListener('unhandledrejection', (e) => toast(e.reason?.message ?? String(e.reason)));
+
+function updateStatus() {
+  statusMode.textContent = `${app.mode} · ${app.shown?.name ?? 'no scene'}`;
+  const sel = app.selection;
+  statusSel.textContent = sel.length === 0 ? '' : sel.length === 1 ? `${sel[0].kind} ${sel[0].id}` : `${sel.length} selected`;
 }
 
-// Start
-animate();
-step();
+on('scene', (source) => {
+  rebuild(app.shown);
+  attachGizmo();
+  renderOutliner();
+  // the inspector already shows what it just wrote; re-rendering would steal input focus
+  if (source !== 'inspector') renderInspector();
+  updateStatus();
+});
+
+on('selection', () => {
+  highlight();
+  attachGizmo();
+  renderOutliner();
+  renderInspector();
+  updateStatus();
+});
+
+on('pose', () => renderInspector());
+
+on('mode', (prev) => {
+  document.body.dataset.mode = app.mode;
+  // edit <-> simulate share the edited scene (playback.js handles entering playback)
+  if (app.mode !== 'playback') {
+    app.shown = app.scene;
+    if (prev === 'playback') app.selection = [];
+    emit('scene', 'mode');
+  }
+  if (app.mode === 'simulate') emit('simStatus');
+  document.getElementById('status-time').textContent = '';
+  updateStatus();
+});
+
+getJson('/health')
+  .then(() => {
+    statusBackend.textContent = 'backend: online';
+    statusBackend.className = 'online';
+  })
+  .catch(() => {
+    statusBackend.textContent = 'backend: offline';
+    statusBackend.className = 'offline';
+  });
+
+// start with an empty scene so the editor works even without the backend, then open the first saved scene
+setScene(newScene('untitled'));
+refreshSceneList().then((scenes) => {
+  if (scenes.length > 0) return loadScene(scenes[0]);
+});

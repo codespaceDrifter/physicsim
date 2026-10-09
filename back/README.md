@@ -1,17 +1,20 @@
-# PyTorch Physics Backend
+# Backend
 
-Tensor-based physics engine (linear dynamics only). See `../documentation.md` for the full walkthrough.
+Batched rigid-body physics engine in PyTorch (quaternions, joints with motors and limits, contacts with friction,
+camera rendering), the ToFuBot robot, its pick-and-place environment and the learning pipeline.
+See `../documentation.md` for how everything works.
 
-Run from `back/`:
+Run everything from `back/` as modules:
 
 ```bash
-python -m simulate   # wipe logs/ and regenerate all example recordings
-python -m api        # FastAPI server on http://localhost:8080
-```
+pip install fastapi uvicorn
+python -m simulate                   # write scenes/*.json, record three_body + billiards into logs/
+python -m api                        # server on http://localhost:8080 (frontend: cd ../front && npm run dev)
 
-Endpoints:
-- `GET /recordings/{name}/{chunk}` - binary recording chunk
-- `GET /worlds` - list of recordings
-- `GET /health` - health check
+python -m ml.collect --envs 128 --episodes 500        # expert demonstrations -> data/bc/
+python -m ml.train_bc --steps 30000                    # -> checkpoints/bc.pt
+python -m ml.train_ppo --init checkpoints/bc.pt        # -> checkpoints/ppo.pt
+python -m ml.eval --ckpt checkpoints/ppo.pt            # success rate + logs/policy_rollout/
+```
 
 Requirements: `torch numpy fastapi uvicorn`

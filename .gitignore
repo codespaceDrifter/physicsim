@@ -15,3 +15,5 @@ secrets/
 
 __pycache__/
 *.pyc
+back/data/
+back/checkpoints/

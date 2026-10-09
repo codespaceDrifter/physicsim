@@ -1,0 +1,732 @@
+{
+ "name": "billiards",
+ "settings": {
+  "dt": 0.008333333333333333,
+  "substeps": 4,
+  "gravity": [
+   0.0,
+   -9.81,
+   0.0
+  ],
+  "G": 0.0
+ },
+ "bodies": [
+  {
+   "id": "cloth",
+   "shape": {
+    "type": "plane"
+   },
+   "position": [
+    0,
+    0,
+    0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.2,
+   "restitution": 0.0,
+   "color": "#1f6b3a"
+  },
+  {
+   "id": "rail_left",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.04,
+     1.37
+    ]
+   },
+   "position": [
+    -1.295,
+    0.02,
+    0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.2,
+   "restitution": 0.8,
+   "color": "#5a3a1e"
+  },
+  {
+   "id": "rail_right",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.04,
+     1.37
+    ]
+   },
+   "position": [
+    1.295,
+    0.02,
+    0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.2,
+   "restitution": 0.8,
+   "color": "#5a3a1e"
+  },
+  {
+   "id": "rail_top",
+   "shape": {
+    "type": "box",
+    "size": [
+     2.54,
+     0.04,
+     0.05
+    ]
+   },
+   "position": [
+    0,
+    0.02,
+    -0.66
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.2,
+   "restitution": 0.8,
+   "color": "#5a3a1e"
+  },
+  {
+   "id": "rail_bottom",
+   "shape": {
+    "type": "box",
+    "size": [
+     2.54,
+     0.04,
+     0.05
+    ]
+   },
+   "position": [
+    0,
+    0.02,
+    0.66
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.2,
+   "restitution": 0.8,
+   "color": "#5a3a1e"
+  },
+  {
+   "id": "row0_stat0",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.8,
+    0.028575,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row0_stat1",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.74285,
+    0.028575,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row0_stat2",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.6857000000000001,
+    0.028575,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row0_stat3",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.62855,
+    0.028575,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row0_mov4",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.5714,
+    0.028575,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  },
+  {
+   "id": "row1_stat0",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.8,
+    0.028575,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row1_stat1",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.74285,
+    0.028575,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row1_stat2",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.6857000000000001,
+    0.028575,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row1_mov3",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.62855,
+    0.028575,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  },
+  {
+   "id": "row1_mov4",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.5714,
+    0.028575,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  },
+  {
+   "id": "row2_stat0",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.8,
+    0.028575,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row2_stat1",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.74285,
+    0.028575,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffffff"
+  },
+  {
+   "id": "row2_mov2",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.6857000000000001,
+    0.028575,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  },
+  {
+   "id": "row2_mov3",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.62855,
+    0.028575,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  },
+  {
+   "id": "row2_mov4",
+   "shape": {
+    "type": "sphere",
+    "radius": 0.028575
+   },
+   "position": [
+    -0.5714,
+    0.028575,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    -2.0,
+    0,
+    0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1739.4085274556105,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.05,
+   "restitution": 0.95,
+   "color": "#ffff00"
+  }
+ ],
+ "joints": [],
+ "cameras": []
+}

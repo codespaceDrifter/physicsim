@@ -1,96 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Physics Simulation</title>
-    <style>
-        body, body * {
-            user-select: none;
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            outline: none;
-        }
-        body { margin: 0; background: #000; }
-        canvas { display: block; }
-
-        /* Playback Panel */
-        #playback-panel {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 14px;
-            z-index: 100;
-        }
-        #elapsed-time, #play-speed {
-            background: rgba(0, 0, 0, 0.7);
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin-bottom: 8px;
-        }
-        #world-list {
-            background: rgba(0, 0, 0, 0.8);
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #444;
-            min-width: 120px;
-            margin-top: 12px;
-        }
-        #world-list .world-button {
-            margin: 6px 0;
-            padding: 8px 12px;
-            border-radius: 4px;
-            background: #2c2f36;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        #world-list .world-button:hover {
-            background: #444851;
-            color: #ffd700;
-        }
-
-        /* Controls Legend */
-        #controls-legend {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 14px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            max-width: 300px;
-            z-index: 100;
-        }
-        #controls-legend ul {
-            margin: 8px 0 0 18px;
-            padding: 0;
-            list-style: disc;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>physicsim</title>
+  <link rel="stylesheet" href="/src/style.css">
 </head>
-<body>
-    <!-- Playback Panel -->
-    <div id="playback-panel">
-        <div id="elapsed-time">Time: 0.00s</div>
-        <div id="play-speed">Speed: 1x</div>
-        <div id="world-list"></div>
-    </div>
+<body data-mode="edit">
+  <div id="app">
+    <header id="toolbar">
+      <div class="brand">physicsim</div>
 
-    <!-- Controls Legend -->
-    <div id="controls-legend">
-        <b>Controls:</b>
-        <ul>
-            <li><b>Left/Right Arrow</b>: Change speed</li>
-            <li><b>Left Click + Drag</b>: Rotate camera</li>
-            <li><b>Right Click + Drag</b>: Pan camera</li>
-            <li><b>Scroll</b>: Zoom</li>
-            <li><b>R</b>: Reset</li>
-        </ul>
-    </div>
+      <div class="group only-edit">
+        <select id="scene-select" title="Scene"></select>
+        <button id="btn-new" title="New scene">New</button>
+        <button id="btn-save" title="Save scene">Save</button>
+      </div>
 
-    <script type="module" src="/src/main.js"></script>
+      <div class="group only-edit">
+        <button id="btn-box" title="Add box">Box</button>
+        <button id="btn-sphere" title="Add sphere">Sphere</button>
+        <button id="btn-cylinder" title="Add cylinder">Cylinder</button>
+        <button id="btn-tofubot" title="Insert ToFuBot prefab">ToFuBot</button>
+      </div>
+
+      <div class="group only-edit">
+        <select id="joint-type" title="Joint type">
+          <option value="revolute">Revolute</option>
+          <option value="prismatic">Prismatic</option>
+          <option value="fixed">Fixed</option>
+        </select>
+        <button id="btn-joint" title="Create joint between two selected bodies (shift-click)">Joint</button>
+      </div>
+
+      <div class="group only-edit">
+        <button id="btn-duplicate" title="Duplicate (Ctrl+D)">Duplicate</button>
+        <button id="btn-delete" title="Delete (Del)">Delete</button>
+      </div>
+
+      <div class="group only-edit">
+        <div class="seg">
+          <button id="btn-translate" class="on" title="Translate (T)">Move</button>
+          <button id="btn-rotate" title="Rotate (R)">Rotate</button>
+        </div>
+        <button id="btn-snap" title="Snap 0.01 m / 15°">Snap</button>
+      </div>
+
+      <div class="group only-simulate">
+        <button id="btn-play" class="primary">▶ Play</button>
+        <button id="btn-pause">Pause</button>
+        <button id="btn-step">Step</button>
+        <button id="btn-stop">■ Stop</button>
+      </div>
+
+      <div class="group only-playback">
+        <select id="rec-select" title="Recording"></select>
+        <button id="pb-play" class="primary">▶ Play</button>
+        <select id="pb-speed" title="Playback speed">
+          <option value="0.25">0.25×</option>
+          <option value="0.5">0.5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+          <option value="4">4×</option>
+        </select>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="seg modes">
+        <button data-mode="edit" class="on">Edit</button>
+        <button data-mode="simulate">Simulate</button>
+        <button data-mode="playback">Playback</button>
+      </div>
+    </header>
+
+    <aside id="outliner">
+      <div class="panel-title">Scene tree</div>
+      <div id="outliner-tree"></div>
+    </aside>
+
+    <main id="viewport">
+      <div id="viewtools">
+        <button data-view="top">Top</button>
+        <button data-view="front">Front</button>
+        <button data-view="right">Right</button>
+        <button data-view="iso">Iso</button>
+        <span class="sep"></span>
+        <button id="btn-ortho" title="Toggle perspective / orthographic">Persp</button>
+        <button id="btn-fit" title="Frame selection (F)">Fit</button>
+      </div>
+      <div id="feeds" class="only-simulate"></div>
+      <div id="timeline" class="only-playback">
+        <input type="range" id="pb-slider" min="0" max="0" value="0" step="1">
+        <span id="pb-time">0.000 s</span>
+      </div>
+    </main>
+
+    <aside id="right">
+      <div id="simpanel" class="only-simulate">
+        <div class="panel-title">Simulation</div>
+        <div class="section">
+          <div class="row"><label>State</label><span id="sim-state" class="readout">stopped</span></div>
+          <div class="row"><label>Time</label><span id="sim-time" class="readout">0.000 s</span></div>
+        </div>
+        <div id="robot-section" class="section">
+          <div class="section-title">ToFuBot</div>
+          <div class="row">
+            <label>Autopilot</label>
+            <select id="autopilot">
+              <option value="off">off</option>
+              <option value="expert">expert</option>
+              <option value="policy">policy</option>
+            </select>
+          </div>
+          <div class="keys">
+            <span><kbd>W</kbd><kbd>S</kbd> drive</span>
+            <span><kbd>A</kbd><kbd>D</kbd> steer</span>
+            <span><kbd>J</kbd><kbd>L</kbd> turret</span>
+            <span><kbd>I</kbd><kbd>K</kbd> shoulder</span>
+            <span><kbd>U</kbd><kbd>O</kbd> elbow</span>
+            <span><kbd>Space</kbd> gripper <b id="gripper-state"></b></span>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Joints</div>
+          <div id="joint-readout"></div>
+        </div>
+      </div>
+      <div id="inspector"></div>
+    </aside>
+
+    <footer id="statusbar">
+      <span id="status-mode"></span>
+      <span id="status-sel"></span>
+      <span class="spacer"></span>
+      <span id="status-hint">LMB orbit · RMB pan · wheel zoom · F frame · shift-click multi-select</span>
+      <span id="status-time"></span>
+      <span id="status-backend">backend: …</span>
+    </footer>
+  </div>
+  <div id="toasts"></div>
+
+  <script type="module" src="/src/main.js"></script>
 </body>
 </html>

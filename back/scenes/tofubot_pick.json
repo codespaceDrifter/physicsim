@@ -1,0 +1,1031 @@
+{
+ "name": "tofubot_pick",
+ "settings": {
+  "dt": 0.016666666666666666,
+  "substeps": 4,
+  "gravity": [
+   0.0,
+   -9.81,
+   0.0
+  ],
+  "G": 0.0
+ },
+ "bodies": [
+  {
+   "id": "ground",
+   "shape": {
+    "type": "plane"
+   },
+   "position": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#9a9a9a"
+  },
+  {
+   "id": "tofubot/chassis",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.3,
+     0.06,
+     0.18
+    ]
+   },
+   "position": [
+    0.0,
+    0.07,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 460.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2ead3"
+  },
+  {
+   "id": "tofubot/knuckle_fl",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.03,
+     0.03
+    ]
+   },
+   "position": [
+    0.1,
+    0.05,
+    -0.115
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 2000.0,
+   "static": false,
+   "collide": false,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/knuckle_fr",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.03,
+     0.03
+    ]
+   },
+   "position": [
+    0.1,
+    0.05,
+    0.115
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 2000.0,
+   "static": false,
+   "collide": false,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/wheel_fl",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.05,
+    "height": 0.03
+   },
+   "position": [
+    0.1,
+    0.05,
+    -0.115
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.7071067811865475,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 500.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/wheel_fr",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.05,
+    "height": 0.03
+   },
+   "position": [
+    0.1,
+    0.05,
+    0.115
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.7071067811865475,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 500.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/wheel_rl",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.05,
+    "height": 0.03
+   },
+   "position": [
+    -0.1,
+    0.05,
+    -0.115
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.7071067811865475,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 500.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/wheel_rr",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.05,
+    "height": 0.03
+   },
+   "position": [
+    -0.1,
+    0.05,
+    0.115
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.7071067811865475,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 500.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "tofubot/turret",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.04,
+    "height": 0.02
+   },
+   "position": [
+    0.03,
+    0.11,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "tofubot/upper_arm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.16,
+     0.03
+    ]
+   },
+   "position": [
+    0.03,
+    0.21500000000000002,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 700.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2ead3"
+  },
+  {
+   "id": "tofubot/forearm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.025,
+     0.14,
+     0.025
+    ]
+   },
+   "position": [
+    0.03,
+    0.36500000000000005,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 700.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2ead3"
+  },
+  {
+   "id": "tofubot/finger_l",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.02,
+     0.05,
+     0.01
+    ]
+   },
+   "position": [
+    0.03,
+    0.4600000000000001,
+    -0.005
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 4000.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.2,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "tofubot/finger_r",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.02,
+     0.05,
+     0.01
+    ]
+   },
+   "position": [
+    0.03,
+    0.4600000000000001,
+    0.005
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 4000.0,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.2,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "block/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.04,
+     0.04,
+     0.04
+    ]
+   },
+   "position": [
+    0.4589053123706931,
+    0.02,
+    -0.3865306123426146
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#d93b3b"
+  },
+  {
+   "id": "block/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.04,
+     0.04,
+     0.04
+    ]
+   },
+   "position": [
+    0.6,
+    0.02,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#3b7fd9"
+  },
+  {
+   "id": "block/2",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.04,
+     0.04,
+     0.04
+    ]
+   },
+   "position": [
+    0.4589053123706931,
+    0.02,
+    0.3865306123426146
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#3bb34a"
+  },
+  {
+   "id": "zone/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    -0.4589053123706931,
+    0.001,
+    -0.3865306123426146
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2a3a3"
+  },
+  {
+   "id": "zone/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    -0.6,
+    0.001,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#a3c4f2"
+  },
+  {
+   "id": "zone/2",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    -0.4589053123706931,
+    0.001,
+    0.3865306123426146
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#a8e0ae"
+  }
+ ],
+ "joints": [
+  {
+   "id": "tofubot/steer_fl",
+   "type": "revolute",
+   "body_a": "tofubot/chassis",
+   "body_b": "tofubot/knuckle_fl",
+   "anchor": [
+    0.1,
+    0.05,
+    -0.115
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "limits": [
+    -0.6,
+    0.6
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 5.0,
+    "damping": 0.2,
+    "max_force": 1.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/steer_fr",
+   "type": "revolute",
+   "body_a": "tofubot/chassis",
+   "body_b": "tofubot/knuckle_fr",
+   "anchor": [
+    0.1,
+    0.05,
+    0.115
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "limits": [
+    -0.6,
+    0.6
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 5.0,
+    "damping": 0.2,
+    "max_force": 1.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/spin_fl",
+   "type": "revolute",
+   "body_a": "tofubot/knuckle_fl",
+   "body_b": "tofubot/wheel_fl",
+   "anchor": [
+    0.1,
+    0.05,
+    -0.115
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "tofubot/spin_fr",
+   "type": "revolute",
+   "body_a": "tofubot/knuckle_fr",
+   "body_b": "tofubot/wheel_fr",
+   "anchor": [
+    0.1,
+    0.05,
+    0.115
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "tofubot/drive_rl",
+   "type": "revolute",
+   "body_a": "tofubot/chassis",
+   "body_b": "tofubot/wheel_rl",
+   "anchor": [
+    -0.1,
+    0.05,
+    -0.115
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 0.5,
+    "max_force": 0.4,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/drive_rr",
+   "type": "revolute",
+   "body_a": "tofubot/chassis",
+   "body_b": "tofubot/wheel_rr",
+   "anchor": [
+    -0.1,
+    0.05,
+    0.115
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 0.5,
+    "max_force": 0.4,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/turret",
+   "type": "revolute",
+   "body_a": "tofubot/chassis",
+   "body_b": "tofubot/turret",
+   "anchor": [
+    0.03,
+    0.1,
+    0.0
+   ],
+   "axis": [
+    0,
+    1,
+    0
+   ],
+   "limits": [
+    -2.6,
+    2.6
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 10.0,
+    "damping": 0.5,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/shoulder",
+   "type": "revolute",
+   "body_a": "tofubot/turret",
+   "body_b": "tofubot/upper_arm",
+   "anchor": [
+    0.03,
+    0.135,
+    0.0
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": [
+    -0.6,
+    1.9
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 40.0,
+    "damping": 1.5,
+    "max_force": 4.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/elbow",
+   "type": "revolute",
+   "body_a": "tofubot/upper_arm",
+   "body_b": "tofubot/forearm",
+   "anchor": [
+    0.03,
+    0.29500000000000004,
+    0.0
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": [
+    -0.2,
+    2.6
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 20.0,
+    "damping": 0.8,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/finger_l",
+   "type": "prismatic",
+   "body_a": "tofubot/forearm",
+   "body_b": "tofubot/finger_l",
+   "anchor": [
+    0.03,
+    0.43500000000000005,
+    -0.005
+   ],
+   "axis": [
+    0,
+    0,
+    -1
+   ],
+   "limits": [
+    0.0,
+    0.035
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 3.0,
+    "max_force": 3.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "tofubot/finger_r",
+   "type": "prismatic",
+   "body_a": "tofubot/forearm",
+   "body_b": "tofubot/finger_r",
+   "anchor": [
+    0.03,
+    0.43500000000000005,
+    0.005
+   ],
+   "axis": [
+    0,
+    0,
+    1
+   ],
+   "limits": [
+    0.0,
+    0.035
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 3.0,
+    "max_force": 3.0,
+    "target": 0.0
+   }
+  }
+ ],
+ "cameras": [
+  {
+   "id": "tofubot/cam",
+   "body": "tofubot/chassis",
+   "position": [
+    0.14,
+    0.1,
+    0.0
+   ],
+   "rotation": [
+    0.6644630243886748,
+    -0.24184476264797522,
+    -0.6644630243886747,
+    -0.24184476264797528
+   ],
+   "fov": 100,
+   "width": 64,
+   "height": 64
+  }
+ ]
+}
