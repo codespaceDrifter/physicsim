@@ -1,6 +1,6 @@
 # physicsim  
 
-this is a physics simulation app. with a Go backend and a Threejs frontend
+this is a physics simulation app. with a PyTorch backend and a Threejs frontend
 
 build the fundementals of physics and also to build the fundementals of engineering  
 

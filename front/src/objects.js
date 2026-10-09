@@ -30,7 +30,7 @@ export function updateSimulation(frameData) {
 
   const elapsedTimeDiv = document.getElementById('elapsed-time');
   if (elapsedTimeDiv && typeof curTime === 'number') {
-    elapsedTimeDiv.textContent = `Time: ${(curTime / 1000).toFixed(2)}s`;
+    elapsedTimeDiv.textContent = `Time: ${curTime.toFixed(2)}s`;
   }
 
   idArray.forEach((id, index) => {

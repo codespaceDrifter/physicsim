@@ -6,7 +6,7 @@ This document explains the entire codebase from the ground up. Read it top to bo
 
 ## Part 1: The Object
 
-Everything in this simulation starts with an object. An object is a physical thing - a planet, a ball, a table. In code, this is `PhysicsObject` in `back/physics_object.py`.
+Everything in this simulation starts with an object. An object is a physical thing - a planet, a ball, a table. In code, this is `Obj` in `back/obj.py`.
 
 An object has two parts: its **shape** (what it looks like) and its **physics state** (where it is, how fast it's moving, etc).
 
@@ -23,43 +23,34 @@ A mesh has:
 You don't create meshes manually. Instead, `back/shapes.py` has helper functions:
 
 ```python
-mesh = sphere(radius=10, subdivisions=2, device='cuda')
-mesh = box(width=10, height=20, depth=30, device='cuda')
+mesh = sphere(radius=10, subdivisions=2)
+mesh = box(w=10, h=20, d=30)
 ```
 
-The sphere function creates an icosahedron and subdivides it to approximate a sphere. The box function just makes 8 vertices and 12 triangles.
+The sphere function creates an icosahedron and subdivides it to approximate a sphere. The box function just makes 8 vertices and 12 triangles. `hollow_rect_frame()` builds the billiard table rails out of 4 boxes.
+
+The mesh is re-centered so its volume-weighted center of mass sits at the origin.
 
 ### The Physics State
 
-Now that we have a shape, we wrap it in a `PhysicsObject`. This adds all the physics:
+Now that we have a shape, we wrap it in an `Obj`. This adds the physics (linear only, no rotation yet):
 
-**Linear motion:**
 - `position` - where the center of mass is in world space
 - `velocity` - how fast it's moving (meters per second)
 - `force` - forces currently acting on it (gets reset each frame)
 - `mass` - calculated from mesh volume × density
-
-**Rotational motion:**
-- `rotation` - a 3×3 matrix describing current orientation
-- `angular_velocity` - how fast it's spinning (radians per second)
-- `torque` - rotational forces acting on it (gets reset each frame)
-- `inertia` - resistance to rotation (like mass, but for spinning)
-
-**Other:**
-- `id` - unique name (like "ball1" or "earth")
-- `color` - hex color for rendering
-- `restitution` - bounciness (1.0 = perfectly elastic, 0 = no bounce)
+- `inv_mass` - 1/mass, or 0 for `static=True` bodies (infinite mass, never move)
+- `id`, `color`, `restitution` (1.0 = perfectly elastic, 0 = no bounce)
 
 Creating an object looks like this:
 
 ```python
-obj = PhysicsObject(
-    obj_id='earth',
-    color='#3fa9c0',
-    mesh=sphere(radius=40, subdivisions=2, device='cuda'),
-    density=5000.0,
-    position=torch.tensor([0., 0., 0.], device='cuda'),
-    velocity=torch.tensor([0., 0., -5.], device='cuda')
+obj = Obj(
+    'earth', '#3fa9c0',
+    sphere(40, 2),
+    5000.0,                                       # density
+    torch.tensor([0., 0., 0.], device=config.device),   # position
+    torch.tensor([0., 0., -5.], device=config.device),  # velocity
 )
 ```
 
@@ -70,7 +61,7 @@ obj = PhysicsObject(
 Objects don't exist in isolation. They live in a **World** (`back/world.py`). The world is the container that holds all objects and runs the simulation.
 
 ```python
-world = World(world_id='mySimulation', time_step=0.01, device='cuda')
+world = World('mySimulation', time_step=0.01)
 world.add_object(obj1)
 world.add_object(obj2)
 ```
@@ -93,13 +84,9 @@ If boxes overlap, we do the expensive check: does any triangle edge from object 
 
 If two objects are colliding, we need to bounce them apart. This happens in `back/mechanics.py` in `apply_collision_response()`.
 
-First, we step both objects backwards in time slightly (undo the penetration). Then we calculate an impulse - an instantaneous change in velocity that makes them bounce. The impulse depends on:
-- Their relative velocity (how fast they're approaching)
-- Their masses (heavier objects are harder to move)
-- Their restitution (bounciness)
-- Where they hit (off-center hits cause rotation)
+First, we step both (non-static) objects backwards in time slightly (undo the penetration). Then we calculate an impulse along the line between their centers - an instantaneous change in velocity that makes them bounce. The impulse depends on their relative velocity, their inverse masses, and their restitution.
 
-The math is the standard rigid body impulse formula. It handles both linear and angular response.
+Known limitation: the center-to-center normal is only correct for spheres. Ball vs table rail uses the wrong normal.
 
 **Step 3: Apply gravity**
 
@@ -118,25 +105,16 @@ Each object's `force` attribute gets updated.
 
 **Step 4: Integrate motion**
 
-Finally, each object updates its position and rotation based on accumulated forces. This is `PhysicsObject.update()`.
+Finally, each object updates its position based on accumulated forces. This is `Obj.update()`.
 
-For linear motion (semi-implicit Euler):
+Semi-implicit Euler:
 ```
-acceleration = force / mass
+acceleration = force * inv_mass
 velocity = velocity + acceleration * dt
 position = position + velocity * dt
 ```
 
-For rotation:
-```
-angular_acceleration = inertia_inverse @ torque
-angular_velocity = angular_velocity + angular_acceleration * dt
-rotation = rotation @ (I + skew(angular_velocity * dt))
-```
-
-The rotation matrix can drift over time (stop being a valid rotation), so we re-orthonormalize it each frame using Gram-Schmidt.
-
-After integration, forces and torques are reset to zero for the next frame.
+After integration, forces are reset to zero for the next frame.
 
 ---
 
@@ -159,7 +137,6 @@ recording.simulate()
 This runs the simulation loop, and periodically saves "snapshots" of the world state. Each snapshot contains, for every object:
 - ID
 - Position (3 floats)
-- Rotation (9 floats, the 3×3 matrix flattened)
 - Vertices (the mesh geometry)
 - Indices (triangle connectivity)
 - Color
@@ -185,7 +162,6 @@ For each frame:
     id_length       (uint32)
     id              (bytes)
     position        (3 × float32)
-    rotation        (9 × float32)
     vertex_count    (uint32)
     vertices        (N × float32)
     index_count     (uint32)
@@ -208,7 +184,7 @@ The backend runs a web server (`back/api.py`) using FastAPI. It serves:
 
 ```bash
 cd back
-python api.py  # runs on http://localhost:8080
+python -m api  # runs on http://localhost:8080
 ```
 
 ---
@@ -269,7 +245,7 @@ The `reset()` function loads chunk 0 and resets all counters.
 It keeps a Map of object ID → Three.js Mesh. Each frame:
 
 1. For each object in the frame data:
-   - If we already have a mesh for this ID, update its position/rotation
+   - If we already have a mesh for this ID, update its position
    - If not, create a new mesh from the vertices/indices/color
 2. For each mesh we have:
    - If the object is no longer in the frame, remove it from the scene
@@ -284,17 +260,6 @@ const material = new THREE.MeshStandardMaterial({ color: color });
 const mesh = new THREE.Mesh(geometry, material);
 mesh.position.set(x, y, z);
 scene.add(mesh);
-```
-
-Rotation is trickier. The backend stores a row-major 3×3 matrix. Three.js uses column-major 4×4. We convert:
-```javascript
-matrix4.set(
-  r[0], r[1], r[2], 0,
-  r[3], r[4], r[5], 0,
-  r[6], r[7], r[8], 0,
-  0, 0, 0, 1
-);
-mesh.rotation.setFromRotationMatrix(matrix4);
 ```
 
 ### Scene Setup
@@ -370,13 +335,12 @@ Balls collide with each other and bounce off the table frame.
 **Generate recordings:**
 ```bash
 cd back
-source ../venv/bin/activate
-python simulate.py
+python -m simulate
 ```
 
 **Start the server:**
 ```bash
-python api.py
+python -m api
 ```
 
 **Run the frontend (development):**
@@ -395,10 +359,11 @@ Open http://localhost:5173 and watch the simulation play.
 back/
   mesh.py           - Mesh class (vertices, indices, volume, AABB)
   shapes.py         - sphere(), box() mesh generators
-  physics_object.py - PhysicsObject class (position, velocity, rotation, etc)
+  obj.py            - Obj class (position, velocity, mass, static)
+  config.py         - torch device selection
   world.py          - World class (holds objects, runs simulation loop)
   collision.py      - Collision detection (AABB + triangle intersection)
-  mechanics.py      - Forces (gravity) and collision response (impulses)
+  mechanics.py      - Forces (gravity) and collision response (linear impulses)
   recording.py      - Recording class (runs simulation, saves binary files)
   api.py            - FastAPI server
   simulate.py       - Runs all example simulations

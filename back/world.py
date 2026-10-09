@@ -35,8 +35,10 @@ class World:
 
         # 2. Resolve collisions
         for i, j in collisions:
-            self.objects[i].step_back(self.dt)
-            self.objects[j].step_back(self.dt)
+            if not self.objects[i].static:
+                self.objects[i].step_back(self.dt)
+            if not self.objects[j].static:
+                self.objects[j].step_back(self.dt)
             apply_collision_response(self.objects[i], self.objects[j])
 
         # 3. Apply forces (BATCHED gravitational computation)

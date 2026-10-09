@@ -12,3 +12,6 @@ secrets/
 
 .cursor
 .claude
+
+__pycache__/
+*.pyc

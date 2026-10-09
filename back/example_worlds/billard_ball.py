@@ -22,7 +22,8 @@ def simulate_billard_ball():
         hollow_rect_frame(280.0, 140.0, 5.0, 10.0),
         1000,
         torch.tensor([0., 10.0 / 2, 0.], device=config.device),
-        torch.tensor([0., 0., 0.], device=config.device)
+        torch.tensor([0., 0., 0.], device=config.device),
+        static=True
     )
     world.add_object(table)
 

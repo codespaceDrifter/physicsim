@@ -6,7 +6,7 @@ import config
 
 class Obj:
     def __init__(self, obj_id: str, color: str, mesh: Mesh, density: float,
-                 position: torch.Tensor, velocity: torch.Tensor):
+                 position: torch.Tensor, velocity: torch.Tensor, static: bool = False):
         self.id = obj_id
         self.color = color
         self.mesh = mesh
@@ -19,6 +19,9 @@ class Obj:
 
         self.density = density
         self.mass = mesh.volume * density
+        # static bodies (table, walls) have infinite mass: 1/m = 0 so forces and impulses never move them
+        self.static = static
+        self.inv_mass = 0.0 if static else 1.0 / self.mass
         self.restitution = 1.0
 
     def update(self, dt: float):
@@ -26,7 +29,7 @@ class Obj:
         self.force = torch.where(torch.abs(self.force) < 1e-6,
                                  torch.zeros_like(self.force), self.force)
         # (3,)
-        self.acceleration = self.force / self.mass
+        self.acceleration = self.force * self.inv_mass
         # (3,)
         self.velocity = self.velocity + self.acceleration * dt
         # (3,)

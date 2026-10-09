@@ -21,6 +21,9 @@ class Mesh:
         tris = vertices[indices]  # (num_tris, 3, 3)
         a, b, c = tris[:, 0], tris[:, 1], tris[:, 2]
         # signed volume of each tetrahedron (origin as 4th vertex)
+        # cross product produces vector with magnitude the area of the base of tetrahedron |b x c| = |b| * |c| * sin(θ) and direction orthogonal to the base
+        # (a * cross).sum(dim=1) is a dot product. which is equal to |cross| * |a| * cos(θ). so it multiples the magnitude of cross (the area of the base) with the a projected onto the orthogonal vector to the base (height component) to get a parallelepiped that contains the tetrahedron
+        # since the pyramid is 1/3 the volume of the parallelepiped and the tetrahedron is 1/2 the volume or the pyramid, the tetrahedron is 1/6 the volume of the parallelepiped
         # (num_tris,)
         tet_volumes = (a * torch.cross(b, c, dim=1)).sum(dim=1) / 6.0
         # centroid of each tetrahedron = mean of 4 vertices (origin + a + b + c) / 4
@@ -44,12 +47,7 @@ class Mesh:
         # row selection. (num_triangles, 3 (vertices), 3 (xyz))
         self.triangles = vertices[indices]
 
-        # Compute volume
-        a, b, c = self.triangles[:, 0], self.triangles[:, 1], self.triangles[:, 2]
-        # cross product produces vector with magnitude the area of the base of tetrahedron |b x c| = |b| * |c| * sin(θ) and direction orthogonal to the base
-        cross = torch.cross(b, c, dim=1)
-        # (a * cross).sum(dim=1) is a dot product. which is equal to |cross| * |a| * cos(θ). so it multiples the magnitude of cross (the area of the base) with the a projected onto the orthogonal vector to the base (height component) to get a parallelepiped that contains the tetrahedron
-        # since the pyramid is 1/3 the volume of the parallelepiped and the tetrahedron is 1/2 the volume or the pyramid, the tetrahedron is 1/6 the volume of the parallelepiped
-        # we take the absolute value of the volume of each tetrahedron and sum them together 
-        volume = torch.abs((a * cross).sum(dim=1)).sum() / 6.0
-        self.volume = volume
+        # Volume = |sum of signed tetrahedron volumes|. signed (not per-tet abs) so tets
+        # whose origin lies outside the mesh (hollow / non-convex shapes) cancel correctly.
+        # translating the mesh doesn't change the signed sum of a closed mesh, so reuse it.
+        self.volume = torch.abs(total_volume)

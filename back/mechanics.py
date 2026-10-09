@@ -62,8 +62,11 @@ def apply_collision_response(obj_a, obj_b):
         return
 
     e = torch.sqrt(torch.tensor(obj_a.restitution * obj_b.restitution, device=config.device))
-    m_a_inv = 1.0 / obj_a.mass
-    m_b_inv = 1.0 / obj_b.mass
+    m_a_inv = obj_a.inv_mass
+    m_b_inv = obj_b.inv_mass
+    # two static bodies touching: nothing can move
+    if m_a_inv + m_b_inv == 0:
+        return
 
     # scalar impulse magnitude
     j = -(1.0 + e) * v_rel_n / (m_a_inv + m_b_inv)
