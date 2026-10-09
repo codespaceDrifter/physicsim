@@ -99,11 +99,6 @@ class Recording:
                     for j in range(3):
                         f.write(struct.pack('<f', pos[j]))
 
-                    # Rotation matrix (9 floats, row-major 3x3)
-                    rot = frame['rotation_arrays'][i]
-                    for j in range(9):
-                        f.write(struct.pack('<f', rot[j]))
-
                     # Vertices (count + floats)
                     verts = frame['vertex_arrays'][i]
                     f.write(struct.pack('<I', len(verts)))

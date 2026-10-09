@@ -1,13 +1,18 @@
+# physicsim  
+
 this is a physics simulation app. with a Go backend and a Threejs frontend
 
-the goal is to simulate the position, velocity, size, shape, etc of objects accurately through time. focus on only mechanical solid things right now.
+build the fundementals of physics and also to build the fundementals of engineering  
 
-after being done with robotic sim we are training robot arms to play air hockey!!!
+have a 3d virtual reality world. vr is actually very important. a space in between reality and wireheading. for elf like life to explore vast amounts of real-like spaces and stories. 
+
+various levels of simulation: mechanical, astronomical, atomical, electrical.  
 
 
 
 TO DO:
 understand the code
+- sphere and cylinder primitive 
 - inelastic collision
 - rotation
 robotic sim with magic torque. add randomness to simulate real world (to torque, latency, friction, ground) . 
@@ -20,4 +25,8 @@ three different abstraction levels. hardcoded. maybe merge them eventually but n
 
 thermo.md complete with proofs
 
+12:36. alright let's get started.  
+code all of mindology ai's core code. research and harness. to i guess prove to myself and i guess the world that i am worthy to do this for more years.  
+
+a bit distracted with the idea of DopamineEditor. a visually maximalist crazy code editor.  
 

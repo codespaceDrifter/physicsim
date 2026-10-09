@@ -247,7 +247,7 @@ E &= 2\pi k\sigma \left[1 - \frac{z}{\sqrt{z^2 + R^2}}\right]
 
 > $$\Delta U = -W$$
 
-U can both defined as the work done by the field from inf to target point or work against the field for 0a from target point to inf. 
+U can be defined as the work done by the field from inf to target point, or as the work against the field from target point to inf.
 
 due to the electrostatic force being a conservative force. so the force the source field does as the object travels from point A to point B is the same whichever path is taken. assume $\Delta KE$ = 0, and then confer the conservation of energy proof.  
 you can choose where the potential is defined as zero. it can be infinite distance away or it can be the ground.  
@@ -263,7 +263,7 @@ Voltage:
 
 > $$V_{ba} = V_b - V_a = -\frac{W_{ba}}{q} = -\int_a^b\vec{E}\cdot d\vec{\ell}$$
 
-think of it like another dimension that equals 0 at the infinite away. like if it's 2d, it adds a 3d dimension that is like a hill or a valley and it gradually goes to 0 further away it is. 
+think of it like another dimension that equals 0 at the infinite away. like if it's 2d, it adds a 3d dimension that is like a hill or a valley and it gradually goes to 0 further away it is. the hill is U not V and depends on charge of the target.  
 
 proof:  
 $$\begin{aligned}
@@ -381,7 +381,7 @@ proof:
 V is equal everywhere  
 $Q = Q_1 + Q_2 + Q_3$  
 $Q = C_1V + C_2V + C_3V$  
-$Q = C_{eq}V$
+$Q = C_{eq}V$  
 $C_{eq} = C_1 + C_2 + C_3$
 
 > sequential capacitors: $\frac{1}{C_{eq}} = \frac{1}{C_{1}} + \frac{1}{C_{2}} + \frac{1}{C_{3}}$
@@ -406,7 +406,7 @@ W &= \int_0^Q V\, dq \\
 W &= \frac{1}{C}\int_0^Q q dq \\
 W &= \frac{1}{2}\frac{Q^2}{C}\\
 \because Q &= CV \\
-W &= \frac{1}{2}\frac{Q}{V}
+W &= \frac{1}{2}QV
 \end{aligned}$$
 
 > $$U = \frac{1}{2} \varepsilon_0 E^2 Ad $$
@@ -483,18 +483,123 @@ $\omega = 2\pi f$
 > $$V = \mathcal{E} - Ir$$
 actual voltage = terminal voltage - current flow * internal battery resistance
 
-sequential resistors: 
-
-> $$R = R_1 + R_2 + R_3$$
-V path independent  
-$V = V_1 + V_2 + V_3 = IR_1 + IR_2 + IR_3$  
-$V = I R_{eq}$
-
-Parallel circuits:
-
->$$I = I_1 + I_2 + I_3$$
-
-> $$\frac{1}{R_{eq}} = \frac{1}{R_1} + \frac{1}{R_2} + \frac{1}{R_3}$$
 
 
+# magnetism
+
+> $$d\vec{F} = I d\vec{\ell} \times \vec{B}$$
+
+right hand rule: 
+
+right hand rule 1 magnetism on wire : fingers point towards current (positive flow), fingers bend towards magnetic field, thumb is direction of force on the wire.  
+right hand rule 2 magnetism field from straight wire : thumb along I, fingers curl in direction of B  
+right hand rule 2 magnetism field from looped wire : fingers curl along I, thumb point in direction of B (just at the center or far away)  
+
+> $$\vec{F} = q\vec{v} \times \vec{B}$$
+
+on a motor:  
+> $$\tau = NIAB\sin\theta$$
+
+N: number of coils  
+I: current through each coil  
+A: A = a*b. a = length of the vertical coil. b= width of the coils. two halfs of lever arm added together.  
+$\sin\theta$: angle between coils and magetic field. In case of perpendicular this is 1  
+
+> $$\vec{\tau} = \vec{\mu} \times \vec{B}$$
+
+magnetic dipole moment: $\vec{\mu} = NI\vec{A}$  
+$\vec{A}$ is defined as perpendicular to the plane of the coil  
+
+magnetic potential energy:  
+> $$ U = \int \tau d\theta =  \int NIAB\sin\theta d\theta = - \mu B \cos\theta = -\vec{\mu} \cdot \vec{B} $$
+we choose U = 0 at $\theta$ = \frac{\pi}{2} so there's no C term in integration  
+
+hall effects: idealized condition thin conductor uniform magnetic field cause charges to pile up on one side producing electric field in opposite direction of magnetic of equal force  
+voltage difference across the sheet is $\mathcal{E_H}$ 
+
+> $$\mathcal{E_H} = E_H d= v_d B d$$
+
+magnetism from a straight wire (assuming long wire relative to r):  
+
+> $$B = \frac{\mu_0 I}{2\pi r}$$
+
+magnetism from two parallel straight wires (same direction attract opposite directions repulse):  
+
+> $$F_2 = I_2\ell_2B_1 = \frac{\mu_0}{2\pi}\frac{I_1I_2}{d}\ell_2$$
+
+draw an imaginary loop parallel to a wire segment (kind of like the gauss law) we can calculate the net magentism parallel to the segment  
+
+> $$\oint \vec{B} \cdot d\vec{\ell} = \mu_0 I_{encl}$$
+l is the lenght of the imaginary loop
+
+magnetic field within a solenoid ( a lot of coils):  
+> $$B = \mu_0 n I$$
+
+n is number of loop per meter
+
+we draw a rectangle along the solenoid, the outside horizontal have small field so we neglect it, the vertical sides are perpendicular to the field or cancel out, leaving only the inner horizontal.  
+we get $B\ell = \mu_u N I$, we take $n = N/ \ell$  
+
+general formula for B field from wire to a point no symmetry needed:  
+>$$d\vec{B} = \frac{\mu_0I}{4\pi} \frac{d\vec{\ell}\times\hat{r}}{r^2}$$
+
+r is the vector from that line segment to the point
+
+Biot-Savart result for magnetic dipole (coil) along the tube far outside of the coil:   
+
+>$$B = \frac{\mu_0 NIR^2}{2(R^2+x^2)^\frac{3}{2}}$$
+
+R is the radius of the coil, x is distance from center of the loop assumed it's a no width coil, for coil with width you have to integrate it
+
+# induction
+
+> $$\mathcal{E} = - N \frac{d\Phi_B}{dt}$$
+
+lorenz's law:  
+an induced emf is always induced in a direction that opposes the original change in flux that caused it
+
+sliding rod on U shaped conductor increasing area which magnetism pass through:  
+
+> $$\mathcal{E} = B\ell v$$
+
+
+## generator
+> $$\varepsilon = NBA\omega\sin(\omega t)$$
+loop spinning in uniform $B$ field. $N$ = number of turns, $B$ = field strength, $A$ = loop area, $\omega$ = angular velocity (rad/s). Peak voltage $\varepsilon_0 = NBA\omega$. AC comes from the geometry — $\cos\theta$ flux oscillates as loop rotates, derivative gives $\sin$.
+## RMS
+> $$\varepsilon_{rms} = \frac{\varepsilon_0}{\sqrt{2}}, \quad I_{rms} = \frac{I_0}{\sqrt{2}}$$
+"effective" AC value. Square the sine wave, average it, square root. 120V wall outlet = $\varepsilon_{rms}$, actual peak is $120\sqrt{2} \approx 170$V. Plug RMS values into DC power formulas directly: $P_{avg} = I_{rms}V_{rms} = I_{rms}^2 R = V_{rms}^2/R$.
+
+## mutual inductance
+> $$M = \frac{N_2 \Phi_{21}}{I_1}$$
+mutual inductance between two coils. $N_2$ = turns in coil 2, $\Phi_{21}$ = flux through one turn of coil 2 caused by coil 1, $I_1$ = current in coil 1. $M$ depends only on geometry (shape, distance, orientation), not on current — $\Phi_{21} \propto I_1$ so $I_1$ cancels.
+> $$\varepsilon_2 = -M\frac{dI_1}{dt}$$
+EMF induced in coil 2 by changing current in coil 1. Changing current → changing flux → induced voltage. Works both ways: $\varepsilon_1 = -M\frac{dI_2}{dt}$ too, same $M$.
+
+## self-inductance
+> $$L = \frac{N\Phi_B}{I}$$
+same idea as mutual inductance but a coil inducing on *itself*. $N$ = turns, $\Phi_B$ = flux through one turn from its own current. $L$ depends only on geometry, not current.
+> $$\varepsilon = -L\frac{dI}{dt}$$
+coil resists changes to its own current. Current increasing → induced EMF opposes. Current decreasing → induced EMF tries to maintain. Inductor is to current what capacitor is to voltage.
+
+## energy stored in inductor
+> $$U_B = \frac{1}{2}LI^2$$
+energy stored in inductor's magnetic field. Analog of $U_E = \frac{1}{2}CV^2$ for capacitors.
+## magnetic energy density
+> $$u_B = \frac{1}{2}\frac{B^2}{\mu_0}$$
+energy per unit volume (J/m³) stored in a magnetic field $B$. Analog of $u_E = \frac{1}{2}\epsilon_0 E^2$. Derived by rewriting $\frac{1}{2}LI^2$ in terms of $B$ using solenoid formulas.
+
+## LR circuits
+> $$I(t) = \frac{V_0}{R}(1 - e^{-t/\tau})$$
+LR charging. Current ramps up from 0 toward max $V_0/R$. Inductor fights current increase.
+> $$I(t) = I_0 e^{-t/\tau}$$
+LR discharging. Current decays from $I_0$ toward 0. Inductor tries to keep current flowing.
+> $$\tau = L/R$$
+time constant. At $t = \tau$, charging reaches ~63%, discharging drops to ~37%. Bigger $L$ → more energy stored → slower change. Bigger $R$ → more dissipation → faster change.
+
+## LC oscillations
+> $$Q(t) = Q_0 \cos(\omega t + \phi_0)$$
+charge on capacitor oscillates sinusoidally. $Q_0$ = max charge, $\phi_0$ = initial phase (0 if starting fully charged). Energy sloshes between capacitor ($\frac{1}{2}CV^2$) and inductor ($\frac{1}{2}LI^2$) forever (no resistance).
+> $$\omega = \frac{1}{\sqrt{LC}}$$
+angular frequency of oscillation. Bigger $L$ or $C$ → slower oscillation. Current is $I(t) = -Q_0\omega\sin(\omega t + \phi_0)$, max current $I_{max} = Q_0/\sqrt{LC}$.
 

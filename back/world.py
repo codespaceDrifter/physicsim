@@ -3,7 +3,6 @@ Physics world simulation.
 """
 from typing import List
 from obj import Obj
-import config
 from collision import check_collision_pair
 from mechanics import apply_gravity_batched, apply_collision_response
 
@@ -58,8 +57,6 @@ class World:
             'cur_time': self.time,
             'id_array': [obj.id for obj in self.objects],
             'position_arrays': [obj.position.cpu().tolist() for obj in self.objects],
-            # (3, 3) rotation matrix flattened to 9 floats (row-major)
-            'rotation_arrays': [obj.rotation.cpu().reshape(-1).tolist() for obj in self.objects],
             'vertex_arrays': [obj.mesh.vertices.cpu().reshape(-1).tolist() for obj in self.objects],
             'index_arrays': [obj.mesh.indices.cpu().reshape(-1).tolist() for obj in self.objects],
             'color_array': [obj.color for obj in self.objects],

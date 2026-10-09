@@ -12,18 +12,11 @@
  *   - For each object:
  *     - idLength: uint32, id: bytes
  *     - position: 3x float32
- *     - rotation: 9x float32 (row-major 3x3 matrix)
  *     - vertexCount: uint32, vertices: N x float32
  *     - indexCount: uint32, indices: N x uint32
  *     - colorLength: uint32, color: bytes
  */
 
-/**
- * Fetch and decode a recording chunk from the backend.
- * @param {string} worldName - Name of the world/recording
- * @param {number} chunkIndex - Chunk index (0-based)
- * @returns {Object|null} Decoded recording or null on error
- */
 export async function fetchRecording(worldName, chunkIndex) {
   const response = await fetch(`/recordings/${worldName}/${chunkIndex}`);
   if (!response.ok) {
@@ -33,11 +26,6 @@ export async function fetchRecording(worldName, chunkIndex) {
   return decodeRecording(buffer);
 }
 
-/**
- * Decode binary recording data.
- * @param {ArrayBuffer} buffer - Raw binary data
- * @returns {Object} Decoded recording with frames
- */
 function decodeRecording(buffer) {
   const view = new DataView(buffer);
   let offset = 0;
@@ -45,7 +33,6 @@ function decodeRecording(buffer) {
   // Skip magic header (4 bytes)
   offset += 4;
 
-  // Header fields
   const secondsPerFrame = view.getFloat32(offset, true);
   offset += 4;
   const totalFrames = view.getUint32(offset, true);
@@ -53,7 +40,6 @@ function decodeRecording(buffer) {
   const frameCount = view.getUint32(offset, true);
   offset += 4;
 
-  // Decode frames
   const frames = {};
   for (let i = 0; i < frameCount; i++) {
     const time = view.getFloat32(offset, true);
@@ -61,10 +47,8 @@ function decodeRecording(buffer) {
     const objectCount = view.getUint32(offset, true);
     offset += 4;
 
-    // Per-frame arrays matching backend naming (snake_case -> camelCase)
     const idArray = [];
     const positionArrays = [];
-    const rotationArrays = [];
     const vertexArrays = [];
     const indexArrays = [];
     const colorArray = [];
@@ -85,14 +69,6 @@ function decodeRecording(buffer) {
       ];
       offset += 12;
       positionArrays.push(position);
-
-      // Rotation matrix (9 floats, row-major 3x3)
-      const rotation = [];
-      for (let k = 0; k < 9; k++) {
-        rotation.push(view.getFloat32(offset, true));
-        offset += 4;
-      }
-      rotationArrays.push(rotation);
 
       // Vertices (count + floats)
       const vertexCount = view.getUint32(offset, true);
@@ -121,7 +97,6 @@ function decodeRecording(buffer) {
       curTime: time,
       idArray,
       positionArrays,
-      rotationArrays,
       vertexArrays,
       indexArrays,
       colorArray,
