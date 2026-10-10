@@ -209,14 +209,20 @@ class World:
             self.step_eager()
             self.time += self.dt
             return
-        # eager code (resets, edits) may have replaced state tensors: copy them into the captured buffers
+        self.sync_graph_state()
+        self.graph.replay()
+        self.time += self.dt
+
+    def sync_graph_state(self):
+        # eager code (resets, edits) may have replaced state tensors: copy them into the captured buffers, so CUDA
+        # graphs (the step, camera renders) read the current state
+        if getattr(self, 'graph', None) is None:
+            return
         for o, n in self.graph_slots:
             fixed = self.graph_state[(id(o), n)]
             if getattr(o, n) is not fixed:
                 fixed.copy_(getattr(o, n))
                 setattr(o, n, fixed)
-        self.graph.replay()
-        self.time += self.dt
 
     def step_eager(self):
         self.joints.prepare()

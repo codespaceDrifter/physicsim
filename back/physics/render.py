@@ -44,6 +44,7 @@ class Renderer:
     def enable_cuda_graph(self):
         # record render() as a CUDA graph (one launch instead of thousands of small kernels). call after the world's
         # enable_cuda_graph(), so the poses it reads live at fixed addresses
+        self.world.sync_graph_state()
         stream = torch.cuda.Stream()
         stream.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(stream):
@@ -60,6 +61,7 @@ class Renderer:
         # (E, H, W, 3) uint8. with a CUDA graph, the result is overwritten by the next render: copy it to keep it
         if getattr(self, 'graph', None) is None:
             return self.render_eager()
+        self.world.sync_graph_state()
         self.graph.replay()
         return self.graph_out
 
