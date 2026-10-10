@@ -354,7 +354,7 @@ runs the expert, or the trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from
 - **Edit**: add boxes / spheres / cylinders, insert a LeKiwi, click to select, move/rotate gizmo with snapping, joints
   between two shift-selected bodies, every field editable (rotation shown as XYZ degrees, stored as a quaternion).
 - **Simulate**: Play sends the edited scene to the server. Drive LeKiwi with the keyboard:
-  W/S forward/back, A/D strafe, Q/E turn, Y/U pan, H/J shoulder, N/M elbow, I/K wrist, O/L wrist roll,
+  W/S forward/back, A/D strafe, Q/E turn, Y/U pan, H/J shoulder, N/M elbow, I/O wrist, K/L wrist roll,
   Space gripper. Or switch the autopilot to expert / policy. Both camera feeds and the joint values are shown live.
 - **Playback**: pick a recording, play / pause / speed / scrub.
 - **Camera**: left-drag orbits, ctrl+left-drag or right-drag pans (camera and pivot together), wheel zooms at a

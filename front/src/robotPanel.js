@@ -30,8 +30,8 @@ const ARM_KEYS = {
   y: ['shoulder_pan', -1], u: ['shoulder_pan', 1],
   h: ['shoulder_lift', 1], j: ['shoulder_lift', -1],
   n: ['elbow_flex', 1], m: ['elbow_flex', -1],
-  i: ['wrist_flex', 1], k: ['wrist_flex', -1],
-  o: ['wrist_roll', -1], l: ['wrist_roll', 1],
+  i: ['wrist_flex', 1], o: ['wrist_flex', -1],
+  k: ['wrist_roll', -1], l: ['wrist_roll', 1],
 }; // {key: [joint name, +1 | -1]}
 
 const held = new Set(); // {key} teleop keys currently held, lowercase
