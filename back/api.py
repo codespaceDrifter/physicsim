@@ -3,7 +3,7 @@
 #   GET  /scenes                      {"scenes": [name]}
 #   GET  /scenes/{name}               scene JSON from scenes/{name}.json
 #   PUT  /scenes/{name}               save scene JSON
-#   GET  /prefabs/tofubot             {"bodies", "joints", "cameras"} of a ToFuBot at the origin
+#   GET  /prefabs/lekiwi              {"bodies", "joints", "cameras"} of a LeKiwi at the origin
 #   GET  /recordings                  {"recordings": [name]}
 #   GET  /recordings/{name}/scene     scene the recording was made from
 #   GET  /recordings/{name}/{chunk}   binary chunk (format in recording.py)
@@ -19,7 +19,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Requ
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from recording import LOGS_DIR
-from robot.tofubot import tofubot
+from robot.lekiwi import lekiwi
 from live import LiveSession, CAMERA_EVERY
 
 SCENES_DIR = Path(__file__).parent / 'scenes'
@@ -59,9 +59,9 @@ async def put_scene(name: str, request: Request):
     return {'ok': True}
 
 
-@app.get('/prefabs/tofubot')
-def prefab_tofubot():
-    return tofubot()
+@app.get('/prefabs/lekiwi')
+def prefab_lekiwi():
+    return lekiwi()
 
 
 @app.get('/recordings')

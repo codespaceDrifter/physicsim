@@ -7,7 +7,7 @@ import os
 import torch
 from physics.world import World
 from physics.render import Renderer
-from robot.tofubot import PREFIX, ACTUATORS
+from robot.lekiwi import PREFIX
 from robot.pick_place import PickPlaceEnv, ACTION_REPEAT
 from ml.expert import Expert
 from ml.policy import Policy, FrameStack
@@ -25,20 +25,25 @@ class LiveSession:
         num_blocks = 0
         while f'block/{num_blocks}' in ids and f'zone/{num_blocks}' in ids:
             num_blocks += 1
-        self.has_robot = PREFIX + 'chassis' in ids and num_blocks > 0
+        self.has_robot = PREFIX + 'base' in ids and num_blocks > 0
         if self.has_robot:
             self.env = PickPlaceEnv(1, device, num_blocks=num_blocks, scene_json=scene)
             self.world = self.env.world
         else:
             self.env = None
             self.world = World(scene, 1, device)
+        self.cameras = [Renderer(self.world, c) for c in scene['cameras']]
         if str(device).startswith('cuda'):
-            self.world.enable_cuda_graph()
-            # capture warm-up stepped the world, start from the scene again
-            self.world.reset(torch.ones(1, dtype=torch.bool, device=device))
+            if self.has_robot:
+                self.env.enable_cuda_graph()
+            else:
+                self.world.enable_cuda_graph()
+                # capture warm-up stepped the world, start from the scene again
+                self.world.reset(torch.ones(1, dtype=torch.bool, device=device))
+            for cam in self.cameras:
+                cam.enable_cuda_graph()
             self.world.time = 0.0
         self.world.joints.prepare()
-        self.cameras = [Renderer(self.world, c) for c in scene['cameras']]
         self.steps = 0
         self.autopilot = 'off'
         self.expert = None
@@ -48,7 +53,7 @@ class LiveSession:
     def set_autopilot(self, mode):
         assert mode in ('off', 'expert', 'policy'), f'unknown autopilot mode {mode}'
         if mode != 'off' and not self.has_robot:
-            raise ValueError('autopilot needs the tofubot and block/i + zone/i bodies in the scene')
+            raise ValueError('autopilot needs the lekiwi and block/i + zone/i bodies in the scene')
         if mode == 'policy':
             path = next((p for p in CHECKPOINTS if os.path.exists(p)), None)
             if path is None:

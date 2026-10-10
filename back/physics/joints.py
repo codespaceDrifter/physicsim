@@ -1,4 +1,4 @@
-# Joint constraints: revolute, prismatic, fixed. batched over envs, solved Gauss-Seidel by graph color.
+# Joint constraints: revolute, prismatic, fixed, batched over envs.
 #
 # every joint has a frame on body A and on body B (anchor point + orientation whose local +x is the joint axis).
 # it has 6 constraint rows, all expressed along body A's joint-frame axes u_x, u_y, u_z:
@@ -8,12 +8,12 @@
 #   revolute  locks [x y z | . y z], free = row 3 (rotation about the axis)
 #   prismatic locks [. y z | x y z], free = row 0 (sliding along the axis)
 #   fixed     locks everything
-# joints of the same color share no dynamic body, so a whole color is solved in parallel with exact Gauss-Seidel
-# between colors (the "graph coloring" PhysX/Box2D use on GPUs/SIMD). joints are stored sorted by color so a
-# color is a contiguous slice.
+# all locked rows and all motor rows of all joints are solved together in one exact linear solve (Baraff 1996),
+# so a mechanism behaves as one rigid whole: a light link holding up a heavy arm doesn't bend. solving joints one
+# at a time (Gauss-Seidel), each joint only feels its two neighbouring bodies and soft joints sag under load.
 import math
 import torch
-from physics.math3d import quat_mul, quat_conj, quat_rotate, quat_rotate_inv, quat_to_matrix, quat_from_two_axes, wrap_angle, const
+from physics.math3d import quat_mul, quat_conj, quat_rotate, quat_rotate_inv, quat_to_matrix, quat_from_two_axes, wrap_angle, const, spd_inverse
 
 LOCKS = {'revolute': [1, 1, 1, 0, 1, 1], 'prismatic': [0, 1, 1, 1, 1, 1], 'fixed': [1, 1, 1, 1, 1, 1]}
 FREE_ROW = {'revolute': 3, 'prismatic': 0, 'fixed': -1}
@@ -37,29 +37,10 @@ class Joints:
                 assert d['drive']['damping'] > 0 or d['drive']['stiffness'] > 0, f"drive of {d['id']} needs stiffness or damping"
                 assert d['drive']['mode'] == 'position' or d['drive']['stiffness'] == 0, f"velocity drive of {d['id']} must have stiffness 0"
 
-        # greedy graph coloring: a joint gets the lowest color not used by a joint sharing one of its dynamic bodies
-        color_bodies = []  # [{body index}] dynamic bodies already used by each color
-        colors = []  # [[joint def]]
-        for d in defs:
-            dyn = {world.body_index[d[k]] for k in ('body_a', 'body_b') if not world.scene_static[world.body_index[d[k]]]}
-            c = next((c for c, used in enumerate(color_bodies) if not (used & dyn)), len(colors))
-            if c == len(colors):
-                color_bodies.append(set())
-                colors.append([])
-            color_bodies[c] |= dyn
-            colors[c].append(d)
-        # [(start, end)] slice of each color in the color-sorted joint order
-        self.color_slices = []
-        start = 0
-        for c in colors:
-            self.color_slices.append((start, start + len(c)))
-            start += len(c)
-        defs = [d for c in colors for d in c]
-
-        # ["tofubot/shoulder", ...] - internal (color-sorted) joint order, the order of every (.., J) tensor
+        # ["lekiwi/shoulder_lift", ...] - scene joint order, the order of every (.., J) tensor
         self.ids = [d['id'] for d in defs]
         assert len(set(self.ids)) == self.J, 'duplicate joint ids'
-        # {"tofubot/shoulder": 0, ...}
+        # {"lekiwi/shoulder_lift": 0, ...}
         self.index = {jid: i for i, jid in enumerate(self.ids)}
         # (J,) body indices
         self.body_a = torch.tensor([world.body_index[d['body_a']] for d in defs], device=dev, dtype=torch.long)
@@ -84,6 +65,9 @@ class Joints:
         # (J, 6) which rows are rigidly locked
         self.lock = torch.tensor([LOCKS[d['type']] for d in defs], device=dev, dtype=torch.float32).view(-1, 6)
         self.is_revolute = torch.tensor([d['type'] == 'revolute' for d in defs], device=dev, dtype=torch.bool)
+        # (J,) joint value in the scene's pose (optional "initial", default 0): lets a robot be built in a rest pose while
+        # its joint zeros stay where the real hardware's calibration puts them
+        self.initial = torch.tensor([float(d.get('initial', 0.0)) for d in defs], device=dev)
         self.is_prismatic = torch.tensor([d['type'] == 'prismatic' for d in defs], device=dev, dtype=torch.bool)
         # (J, 6) one-hot of the free row (all zero for fixed joints)
         self.free = torch.tensor([[float(i == FREE_ROW[d['type']]) for i in range(6)] for d in defs], device=dev).view(-1, 6)
@@ -99,6 +83,12 @@ class Joints:
         self.stiffness = torch.tensor([d['drive']['stiffness'] if d['drive'] else 0.0 for d in defs], device=dev)
         self.damping = torch.tensor([d['drive']['damping'] if d['drive'] else 1.0 for d in defs], device=dev)
         self.max_force = torch.tensor([d['drive']['max_force'] if d['drive'] else 0.0 for d in defs], device=dev)
+        # (J,) optional servo speed limit (rad/s or m/s): a position drive never commands more than this
+        self.max_velocity = torch.tensor([d['drive'].get('max_velocity', float('inf')) if d['drive'] else float('inf') for d in defs], device=dev)
+        # (J, 6) one-hot of the free row of driven joints: the motor's row in the global solve
+        self.drive_row = self.free * self.has_drive.unsqueeze(-1)
+        # (J,) implicit drive softness γ = 1 / (h (c + h k)) (only used on drive rows)
+        self.gamma = 1.0 / (world.h * (self.damping + world.h * self.stiffness))
         # (J,) initial targets, (E, J) live targets written in place by controllers
         self.init_target = torch.tensor([d['drive']['target'] if d['drive'] else 0.0 for d in defs], device=dev)
         self.target = self.init_target.repeat(world.E, 1)
@@ -112,9 +102,10 @@ class Joints:
 
     def prepare(self):
         # everything that depends only on positions, recomputed after every position update:
-        #   J_a, J_b (E, J, 6, 6) jacobian rows per side, W_a, W_b = M⁻¹ Jᵀ
+        #   J_a, J_b (E, J, 6, 6) jacobian rows per side, assembled into G (E, 6J, 6N): row velocity = G v
+        #   W (E, 6N, 6J) = M⁻¹ Gᵀ, K_glob = G W, A_inv / L_inv factorized systems for the global solve
         #   C (E, J, 6) position error per row, value (E, J) joint angle / slide
-        #   K (E, J, 6, 6) = J M⁻¹ Jᵀ, K_inv inverse of the locked block, proj / k_free for the free row
+        #   K (E, J, 6, 6) each joint's own block of K_glob, proj / k_free for limits on the free row
         if self.J == 0:
             return
         w = self.world
@@ -139,7 +130,7 @@ class Joints:
         # (E, J, 3) small-angle rotation error: revolute ignores the twist, others lock all 3
         c_ang = 2.0 * torch.where(self.is_revolute.view(1, -1, 1), swing[..., 1:], q_rel[..., 1:])
         angle = 2.0 * torch.atan2(q_rel[..., 1], q_rel[..., 0])
-        self.value = torch.where(self.is_revolute, angle, torch.where(self.is_prismatic, c_lin[..., 0], 0.0))
+        self.value = torch.where(self.is_revolute, wrap_angle(angle + self.initial), torch.where(self.is_prismatic, c_lin[..., 0] + self.initial, 0.0))
         self.C = torch.cat([c_lin, c_ang], dim=-1)
         zeros = torch.zeros_like(axes)
         # (E, J, 6, 6) jacobian rows of each side: row velocity = J_a V_a + J_b V_b, V = [v, ω]
@@ -147,11 +138,27 @@ class Joints:
                               torch.cat([zeros, -axes], dim=-1)], dim=-2)
         self.J_b = torch.cat([torch.cat([axes, torch.cross(rb.unsqueeze(-2).expand_as(axes), axes, dim=-1)], dim=-1),
                               torch.cat([zeros, axes], dim=-1)], dim=-2)
-        # (E, J, 6, 6) velocity change of each body per unit row impulse
-        self.W_a = w.inv_mass_jt(a, self.J_a)
-        self.W_b = w.inv_mass_jt(b, self.J_b)
-        # (E, J, 6, 6) effective inverse mass K = J M⁻¹ Jᵀ
-        self.K = (self.J_a.unsqueeze(-1) * self.W_a.unsqueeze(-3)).sum(-2) + (self.J_b.unsqueeze(-1) * self.W_b.unsqueeze(-3)).sum(-2)
+        # global system over every joint's 6 rows (Baraff 1996): solving all locked rows at once is exact for the whole
+        # mechanism, so a light link holding up a heavy arm doesn't bend (one joint at a time, a soft hinge only feels
+        # its two neighbours and sags by load / (m_eff ω²))
+        E, J, N = w.E, self.J, w.N
+        # (E, J, N, 6, 6) row jacobians placed at each joint's two bodies -> (E, 6J, 6N) dense G
+        G = torch.zeros(E, J, N, 6, 6, device=w.device)
+        jidx = torch.arange(J, device=w.device)
+        G[:, jidx, a] = self.J_a
+        G[:, jidx, b] = self.J_b
+        self.G = G.permute(0, 1, 3, 2, 4).reshape(E, 6 * J, 6 * N)
+        # (E, N, 6, 6) block-diagonal inverse mass [m⁻¹ I, 0; 0, I⁻¹_world]
+        minv = torch.zeros(E, N, 6, 6, device=w.device)
+        minv[..., :3, :3] = torch.diag_embed(w.inv_mass.expand(E, N).unsqueeze(-1).expand(E, N, 3))
+        minv[..., 3:, 3:] = w.inv_inertia_world
+        # (E, 6N, 6J) W = M⁻¹ Gᵀ, velocity change per unit row impulse
+        GT = self.G.transpose(1, 2).reshape(E, N, 6, 6 * J)
+        self.W = (minv @ GT).reshape(E, 6 * N, 6 * J)
+        # (E, 6J, 6J) K = G M⁻¹ Gᵀ over all rows
+        self.K_glob = self.G @ self.W
+        # (E, J, 6, 6) each joint's own block of K (its diagonal block)
+        self.K = self.K_glob.reshape(E, J, 6, J, 6).diagonal(dim1=1, dim2=3).permute(0, 3, 1, 2)
         lock = self.lock
         # inverse of the locked block, unlocked rows masked to identity so it stays invertible
         self.K_inv = torch.linalg.inv_ex(self.K * (lock.unsqueeze(-1) * lock.unsqueeze(-2)) + torch.diag_embed(1.0 - lock))[0] * (lock.unsqueeze(-1) * lock.unsqueeze(-2))
@@ -165,82 +172,94 @@ class Joints:
         # (E, J) inverse effective mass along proj
         self.k_free = (self.proj * self.K_proj).sum(-1).clamp_min(1e-12)
 
-    def row_velocity(self, sl):
-        # (E, Jc, 6) velocity of every row of joints in slice sl
-        V = self.world.velocity
-        # small matrix-vector products as multiply + sum: batched cuBLAS gemv is very slow on tiny matrices
-        return (self.J_a[:, sl] * V[:, self.body_a[sl]].unsqueeze(-2)).sum(-1) + (self.J_b[:, sl] * V[:, self.body_b[sl]].unsqueeze(-2)).sum(-1)
+        # (6J,) rows in the global solve (locked + drive); (E, 6J, 6J) inverse of A = K + diag(γ on drive rows),
+        # rows outside the solve masked to identity
+        active = (self.lock + self.drive_row).reshape(-1)
+        mask = active.unsqueeze(-1) * active.unsqueeze(-2)
+        A = self.K_glob * mask + torch.diag((self.drive_row * self.gamma.unsqueeze(-1)).reshape(-1) + 1.0 - active)
+        self.A_inv = spd_inverse(A) * mask
+        # (E, 6J, 6J) inverse over the locked rows only: re-solves them after motors saturate at their max force
+        lock = self.lock.reshape(-1)
+        lmask = lock.unsqueeze(-1) * lock.unsqueeze(-2)
+        self.L_inv = spd_inverse(self.K_glob * lmask + torch.diag(1.0 - lock)) * lmask
+
+    def row_velocity(self):
+        # (E, J, 6) velocity of every joint row: G v
+        w = self.world
+        return (self.G @ w.velocity.reshape(w.E, -1, 1)).reshape(w.E, self.J, 6)
 
     def speeds(self):
         # (E, J) velocity of every joint along its free row (rad/s or m/s), 0 for fixed joints
-        return (self.row_velocity(slice(None)) * self.free).sum(-1)
+        return (self.row_velocity() * self.free).sum(-1)
 
-    def apply(self, sl, mu):
-        # apply row impulses mu (E, Jc, 6) of joints in slice sl
-        V = self.world.velocity
-        V.index_add_(1, self.body_a[sl], (self.W_a[:, sl] * mu.unsqueeze(-2)).sum(-1))
-        V.index_add_(1, self.body_b[sl], (self.W_b[:, sl] * mu.unsqueeze(-2)).sum(-1))
+    def apply(self, mu):
+        # apply row impulses mu (E, J, 6) to the bodies: v += W mu
+        w = self.world
+        w.velocity = w.velocity + (self.W @ mu.reshape(w.E, -1, 1)).reshape(w.E, -1, 6)
 
     def warm_start(self):
         if self.J == 0:
             return
         # limits act along the projected free direction: lower pushes +, upper pushes -
-        self.apply(slice(None), self.lam + (self.lam_lower - self.lam_upper).unsqueeze(-1) * self.proj)
+        self.apply(self.lam + (self.lam_lower - self.lam_upper).unsqueeze(-1) * self.proj)
         # drive impulses restart from zero every substep (their target moves with the position)
         self.lam_drive.zero_()
 
     def solve(self, use_bias):
+        if self.J == 0:
+            return
         w = self.world
         h = w.h
         bias_rate, mass_scale, impulse_scale = w.joint_soft
-        for start, end in self.color_slices:
-            sl = slice(start, end)
-            # (E, Jc, 6) row velocities. joints in a color share no dynamic body, so an impulse mu on a joint changes
-            # only its own row velocities, by K mu. track that here and touch the bodies once at the end.
-            rv = self.row_velocity(sl)
-            proj, K_proj, k_free, value = self.proj[:, sl], self.K_proj[:, sl], self.k_free[:, sl], self.value[:, sl]
+        # 1. every joint at once, one exact solve (A Δλ = -r) over:
+        #    locked rows: rigid, r = G v + bias C. the solve is exact, so no soft leak is needed for stability, and a
+        #      leak would leave a light link bent under a strong motor's torque
+        #    drive rows (free row of driven joints): implicit spring-damper F = k (x_t - x) + c (v_t - v) (PhysX drive),
+        #      r = v - v_eff + γ λ_acc with γ = 1 / (h (c + h k)) on A's diagonal, v_eff = (k (x_t - x) + c v_t) / (c + h k)
+        E = w.E
+        value = self.value
+        pos_err = torch.where(self.is_revolute, wrap_angle(self.target - value), self.target - value)
+        x_err = torch.where(self.drive_is_position, pos_err, 0.0)
+        v_target = torch.where(self.drive_is_position, 0.0, self.target)
+        k, c = self.stiffness, self.damping
+        v_eff = (k * x_err + c * v_target) / (c + h * k)
+        v_eff = torch.maximum(torch.minimum(v_eff, self.max_velocity), -self.max_velocity)
+        # (E, J, 6) row velocities
+        rv = self.row_velocity()
+        r_locked = rv + (bias_rate * self.C if use_bias else 0.0)
+        r_drive = rv - v_eff.unsqueeze(-1) + (self.gamma * self.lam_drive).unsqueeze(-1)
+        r = torch.where(self.lock > 0, r_locked, torch.where(self.drive_row > 0, r_drive, 0.0))
+        d_lam = -(self.A_inv @ r.reshape(E, -1, 1)).reshape(E, self.J, 6)
+        # motors can't exceed their max force: clamp the drive row's accumulated impulse, then re-solve the locked rows
+        # for the motor impulses actually applied (K_LL Δλ_L = -(r_L + K_LD Δλ_D)), so they stay consistent
+        max_imp = self.max_force * h
+        d_free = (d_lam * self.free).sum(-1)
+        new_drive = torch.where(self.has_drive, torch.maximum(torch.minimum(self.lam_drive + d_free, max_imp), -max_imp), 0.0)
+        d_drive = (new_drive - self.lam_drive).unsqueeze(-1) * self.drive_row
+        r_l = (r + (self.K_glob @ d_drive.reshape(E, -1, 1)).reshape(E, self.J, 6)) * self.lock
+        d_lam = -(self.L_inv @ r_l.reshape(E, -1, 1)).reshape(E, self.J, 6) + d_drive
+        self.lam_drive = new_drive
+        self.lam = self.lam + d_lam * self.lock
+        self.apply(d_lam)
 
-            # 1. drive: implicit spring-damper  F = k (x_target - x) + c (v_target - v)  (PhysX drive model).
-            # solving for the impulse at the end-of-substep velocity gives the soft constraint
-            #   λ = -(v - v_eff + γ λ_acc) / (K + γ),  γ = 1 / (h (c + h k)),  v_eff = (k (x_t - x) + c v_t) / (c + h k)
-            k, c = self.stiffness[sl], self.damping[sl]
-            target = self.target[:, sl]
-            pos_err = torch.where(self.is_revolute[sl], wrap_angle(target - value), target - value)
-            x_err = torch.where(self.drive_is_position[sl], pos_err, 0.0)
-            v_target = torch.where(self.drive_is_position[sl], 0.0, target)
-            gamma = 1.0 / (h * (c + h * k))
-            v_eff = (k * x_err + c * v_target) / (c + h * k)
-            old = self.lam_drive[:, sl]
-            max_imp = self.max_force[sl] * h
-            new = old - ((rv * proj).sum(-1) - v_eff + gamma * old) / (k_free + gamma)
-            new = torch.where(self.has_drive[sl], torch.maximum(torch.minimum(new, max_imp), -max_imp), 0.0)
-            d = new - old
-            self.lam_drive[:, sl] = new
-            mu = d.unsqueeze(-1) * proj
-            rv = rv + d.unsqueeze(-1) * K_proj
-
-            # 2. limits: one-sided rows on the free axis. lower: x - lo >= 0 pushes +, upper: hi - x >= 0 pushes -
-            for sign, gap, lam_buf in ((1.0, value - self.lower[sl], self.lam_lower), (-1.0, self.upper[sl] - value, self.lam_upper)):
-                # speculative when not yet touching (only stop the approach), soft push-out when violated
-                spec = gap > 0
-                bias = torch.where(spec, gap / h, bias_rate * gap if use_bias else 0.0)
-                ms = torch.where(spec, 1.0, mass_scale if use_bias else 1.0)
-                imp_s = torch.where(spec, 0.0, impulse_scale if use_bias else 0.0)
-                old = lam_buf[:, sl]
-                new = torch.clamp_min(old - ms * (sign * (rv * proj).sum(-1) + bias) / k_free - imp_s * old, 0.0)
-                new = torch.where(self.has_limit[sl], new, 0.0)
-                d = sign * (new - old)
-                lam_buf[:, sl] = new
-                mu = mu + d.unsqueeze(-1) * proj
-                rv = rv + d.unsqueeze(-1) * K_proj
-
-            # 3. locked rows as one 6x6 block: Δλ = -K_LL⁻¹ (J v + bias)
-            rhs = rv + (bias_rate * self.C[:, sl] if use_bias else 0.0)
-            ms, imp_s = (mass_scale, impulse_scale) if use_bias else (1.0, 0.0)
-            old = self.lam[:, sl]
-            d_lam = (-ms * (self.K_inv[:, sl] * rhs.unsqueeze(-2)).sum(-1) - imp_s * old) * self.lock[sl]
-            self.lam[:, sl] = old + d_lam
-            self.apply(sl, mu + d_lam)
+        # 2. limits (after the global solve, so a motor pushing into a limit can't overrule it): one-sided rows on the free axis, all joints in one batch (rarely active, and only along the free
+        # direction projected off the locked rows, so they barely couple). lower: x - lo >= 0 pushes +, upper: hi - x >= 0 pushes -
+        rv = self.row_velocity()
+        mu = torch.zeros_like(rv)
+        for sign, gap, lam_buf in ((1.0, self.value - self.lower, self.lam_lower), (-1.0, self.upper - self.value, self.lam_upper)):
+            # speculative when not yet touching (only stop the approach), soft push-out when violated
+            spec = gap > 0
+            bias = torch.where(spec, gap / h, bias_rate * gap if use_bias else 0.0)
+            ms = torch.where(spec, 1.0, mass_scale if use_bias else 1.0)
+            imp_s = torch.where(spec, 0.0, impulse_scale if use_bias else 0.0)
+            old = lam_buf
+            new = torch.clamp_min(old - ms * (sign * (rv * self.proj).sum(-1) + bias) / self.k_free - imp_s * old, 0.0)
+            new = torch.where(self.has_limit, new, 0.0)
+            d = sign * (new - old)
+            lam_buf.copy_(new)
+            mu = mu + d.unsqueeze(-1) * self.proj
+            rv = rv + d.unsqueeze(-1) * self.K_proj
+        self.apply(mu)
 
     def reset(self, env_mask):
         # in place, so tensors captured by a CUDA graph keep their addresses

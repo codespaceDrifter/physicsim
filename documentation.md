@@ -6,14 +6,14 @@ server and the editor. Read it top to bottom.
 ```
 back/                      python, run everything from here as modules:  cd back && python -m <module>
   physics/                 the engine
-    math3d.py              batched quaternion / vector math
+    math3d.py              batched quaternion / vector math, SPD inverse
     world.py               World: bodies, integration, the step loop, CUDA graphs
-    joints.py              revolute / prismatic / fixed joints, drives, limits
-    contacts.py            contact solving: non-penetration, friction, restitution
+    joints.py              revolute / prismatic / fixed joints, motors, limits (one global solve)
+    contacts.py            contact solving: non-penetration, friction (incl. omni wheels), restitution
     collision.py           narrowphase: plane / sphere / box / cylinder pairs
     render.py              camera pixels by batched ray casting
   robot/
-    tofubot.py             the ToFuBot model (bodies, joints, camera)
+    lekiwi.py              the LeKiwi model (omni base + SO-101 arm, cameras)
     pick_place.py          batched pick-and-place environment (reset, step, reward, pixels)
   ml/
     expert.py              scripted expert that reads true simulator state
@@ -22,13 +22,13 @@ back/                      python, run everything from here as modules:  cd back
     train_bc.py            behavior cloning
     train_ppo.py           PPO fine-tuning
     rollout.py / eval.py   success rate + recording a policy episode
-  example_scenes.py        three_body, billiards, tofubot_pick scene builders
-  simulate.py              writes scenes/*.json and records the passive scenes into logs/
+  write_scenes.py          writes scenes/lekiwi_pick.json
   recording.py             recording format (playback)
   live.py                  real-time simulation session for the editor
   api.py                   FastAPI server: scenes, prefabs, recordings, websocket
   scenes/                  scene JSON files the editor opens / saves
 front/                     Three.js + Vite editor (edit / simulate / playback)
+main.py                    starts back (api) + front (vite) together
 logs/{name}/               recordings
 back/data/bc/              behavior cloning dataset (gitignored)
 back/checkpoints/          trained policies (gitignored)
@@ -46,7 +46,7 @@ recordings. One format everywhere.
 
 ```json
 {
-  "name": "tofubot_pick",
+  "name": "lekiwi_pick",
   "settings": {"dt": 0.0167, "substeps": 4, "gravity": [0, -9.81, 0], "G": 0.0},
   "bodies": [ ... ],
   "joints": [ ... ],
@@ -55,29 +55,27 @@ recordings. One format everywhere.
 ```
 
 - `dt`: seconds per world step. `substeps`: solver substeps per step (Part 3).
-- `gravity`: uniform gravity acceleration (the "mechanical level": magic g, no attraction between objects).
-- `G`: gravitational constant for attraction between every pair of bodies (the "planetary level"). 0 = off.
+- `gravity`: uniform gravity acceleration.
+- `G`: gravitational constant for attraction between every pair of bodies (planets). 0 = off.
 
 ### Bodies
 
 ```json
 {
-  "id": "tofubot/chassis",
-  "shape": {"type": "box", "size": [0.3, 0.06, 0.18]},
-  "position": [0, 0.07, 0], "rotation": [1, 0, 0, 0],
+  "id": "lekiwi/wheel_left",
+  "shape": {"type": "cylinder", "radius": 0.0508, "height": 0.025, "omni": true},
+  "position": [0.05, 0.0508, -0.0866], "rotation": [w, x, y, z],
   "velocity": [0, 0, 0], "angular_velocity": [0, 0, 0],
-  "density": 460, "static": false, "collide": true, "group": 1,
-  "friction": 0.8, "restitution": 0.0, "color": "#f2ead3"
+  "density": 493, "static": false, "collide": true, "group": 1,
+  "friction": 1.0, "restitution": 0.0, "color": "#2b2b2b"
 }
 ```
 
-- shapes: `box` (`size` = full side lengths), `sphere` (`radius`), `cylinder` (`radius`, `height`, axis = local +y),
-  `plane` (infinite, normal = local +y, must be static). Real engines (MuJoCo, Bullet) use exactly these primitives
-  for robots because every pair has an exact, fast collision test.
-- mass = volume × density. The inertia tensor of each primitive is diagonal in its own frame (box `m(y²+z²)/12`...,
-  sphere `2/5 m r²`, cylinder `m(3r²+h²)/12` and `m r²/2` about its axis).
-- `static`: infinite mass. Never moves.
-- `collide: false`: visual only (the target zones).
+- shapes: `box` (`size` = full side lengths), `sphere` (`radius`), `cylinder` (`radius`, `height`, axis = local +y,
+  optional `"omni": true` for an omni wheel, Part 3), `plane` (infinite, normal = local +y, must be static).
+  MuJoCo and Bullet use exactly these primitives for robots because every pair has an exact, fast collision test.
+- mass = volume × density. The inertia of each primitive is diagonal in its own frame.
+- `static`: infinite mass, never moves. `collide: false`: visual only (target zones).
 - `group`: bodies that share a nonzero group never collide with each other (robot parts don't self-collide).
 - `friction` of a pair = `sqrt(fa · fb)`, `restitution` = `max(ra, rb)` (Box2D's mixing rules).
 
@@ -85,37 +83,38 @@ recordings. One format everywhere.
 
 ```json
 {
-  "id": "tofubot/shoulder", "type": "revolute",
-  "body_a": "tofubot/turret", "body_b": "tofubot/upper_arm",
-  "anchor": [0.03, 0.135, 0], "axis": [0, 0, -1],
-  "limits": [-0.6, 1.9],
-  "drive": {"mode": "position", "stiffness": 40, "damping": 1.5, "max_force": 4, "target": 0}
+  "id": "lekiwi/shoulder_lift", "type": "revolute",
+  "body_a": "lekiwi/shoulder", "body_b": "lekiwi/upper_arm",
+  "anchor": [0.069, 0.282, 0.018], "axis": [0, 0, -1],
+  "limits": [-1.745, 1.745], "initial": -1.7,
+  "drive": {"mode": "position", "stiffness": 100, "damping": 2, "max_force": 2.0, "max_velocity": 5.8, "target": -1.7}
 }
 ```
 
 - `anchor` and `axis` are in **world** space at the moment the scene is defined, the way you place a joint in CAD.
-  The engine converts them into a frame fixed on each body.
-- types: `revolute` (hinge: 1 rotation about the axis), `prismatic` (slider: 1 translation along the axis), `fixed`.
-- joint value: revolute = angle (rad), prismatic = displacement (m), both 0 in the scene's pose.
+- types: `revolute` (hinge), `prismatic` (slider), `fixed`.
+- joint value: revolute = angle (rad), prismatic = displacement (m). `initial` (optional, default 0) is the value in
+  the scene's pose. LeKiwi is built folded at rest, but its zeros stay where the real arm's calibration puts them.
 - `limits`: `[lower, upper]` or `null`.
-- `drive`: a motor. `position` mode is a spring-damper toward `target` (a servo). `velocity` mode
-  (stiffness 0) is a damper toward a target speed (a wheel motor). `max_force` caps it (N·m or N).
+- `drive`: a motor. `position` mode is a spring-damper toward `target` (a servo), `velocity` mode (stiffness 0) is a
+  damper toward a target speed (a wheel motor). `max_force` caps it (N·m or N), optional `max_velocity` caps the
+  speed a position drive commands (a real servo's top speed).
 
 ### Cameras
 
 ```json
-{"id": "tofubot/cam", "body": "tofubot/chassis", "position": [0.14, 0.10, 0], "rotation": [...],
- "fov": 100, "width": 64, "height": 64}
+{"id": "lekiwi/front_cam", "body": "lekiwi/base", "position": [0.125, -0.025, 0], "rotation": [...],
+ "fov": 90, "width": 64, "height": 64}
 ```
 
-Rigidly attached to `body` at a local offset. It looks down its local -z with up = local +y (three.js convention).
+Rigidly attached to `body` at a local offset, looking down its local -z with up = local +y (three.js convention).
 
 ---
 
 ## Part 2: The World (state and integration)
 
 `physics/world.py`. A `World` holds **E environments** that share one scene structure, stepped in parallel on the
-GPU: E = 1 for the editor, E = 256 for training. All state is tensors:
+GPU (E = 1 for the editor, 256 for training). All state is tensors:
 
 ```
 pos       (E, N, 3)     position of each body's center of mass
@@ -123,31 +122,24 @@ quat      (E, N, 4)     orientation
 velocity  (E, N, 6)     [linear velocity v, angular velocity ω]
 ```
 
-The velocity is one 6-vector per body so a constraint can read both its bodies with one gather and write them with
-one scatter.
+**Integrating velocities.** Gravity (+ optional n-body gravity). The gyroscopic term `ω × Iω` is integrated
+implicitly with one Newton step in the body frame (Bullet), because explicit integration explodes for spinning bodies.
 
-**Integrating velocities.** Gravity, plus optional n-body gravity `a_i = G Σ m_j (x_j - x_i) / r³`. Rotation needs
-the gyroscopic term `ω × Iω`, which explodes if integrated explicitly for spinning bodies. It is integrated
-implicitly with one Newton step in the body frame (what Bullet does).
-
-**Integrating positions.** `x += v h`, and orientation with the exact exponential map
-`q ← exp(h ω) ⊗ q` (a rotation of angle |ω|h about ω, exact for any angle, then renormalized against float
-round-off). This is why quaternions are used: no drift and no re-orthonormalization.
+**Integrating positions.** `x += v h`, orientation with the exact exponential map `q ← exp(h ω) ⊗ q`: exact for any
+angle, so no drift and no re-orthonormalization (this is why quaternions are used).
 
 ---
 
 ## Part 3: The Solver (how constraints work)
 
-Joints and contacts are **constraints**. Each is a set of *rows*. A row is a scalar velocity that must be 0
-(joints), ≥ 0 (contacts, limits) or bounded (friction, motors):
+Joints and contacts are **constraints**, each a set of *rows*: a scalar velocity that must be 0 (joints), ≥ 0
+(contacts, limits) or bounded (friction, motors).
 
 ```
-row velocity  = J_a · V_a + J_b · V_b         J: (rows, 6) jacobian per body, V = [v, ω]
-impulse λ changes velocities by  ΔV_a = M_a⁻¹ J_aᵀ λ  =  W_a λ
+row velocity  = G v            G: jacobian rows, v = all body velocities [v, ω]
+impulse λ changes velocities by  Δv = M⁻¹ Gᵀ λ  =  W λ
+effective inverse mass  K = G M⁻¹ Gᵀ
 ```
-
-The solver repeatedly computes the impulse that makes each row's velocity right and applies it. That's
-**sequential impulses** (Box2D, Bullet, PhysX).
 
 ### The step: Box2D v3 "soft step"
 
@@ -159,75 +151,69 @@ for each substep (h = dt / substeps):
     solve           impulses with position correction ("bias")
     integrate positions
     relax           impulses again without bias (removes the energy the bias added)
-restitution         bounces
+restitution         bounces (only if anything in the scene can bounce)
 ```
 
-**Soft constraints.** Position errors are corrected like a stiff, damped spring (`hertz`, `damping ratio`) solved
-implicitly, instead of a raw position fix-up. Each impulse is
-`Δλ = -m_eff · mass_scale · (Jv + bias_rate · C) - impulse_scale · λ`, which is stable at any mass. Contacts use
-min(120 Hz, substep rate / 4). Above a quarter of the substep rate, resting stacks jitter. Joints use 60 Hz.
+### Joints: one exact global solve
 
-**Speculative contacts.** Contacts are created up to 2 cm before touching. A contact with a gap only removes the
-closing speed that would make the bodies overlap, so fast objects don't tunnel through each other.
+All locked rows and all motor rows of all joints are solved **together, in one linear solve** (Baraff 1996): a
+`6J × 6J` system (78 × 78 for LeKiwi), inverted per env by Cholesky every substep.
 
-### Joints: graph coloring
+Why: solving joints one at a time (Gauss-Seidel), each joint only "feels" its two neighbouring links. The SO-101's
+links weigh ~0.1 kg but hold up the whole arm, so its shoulder bent 5.7° under gravity. A global solve treats the
+mechanism as one rigid whole: 0.00° bend, tip within 1-2 mm of the inverse kinematics target.
 
-Joints are solved Gauss-Seidel: each sees the velocities the previous one produced. That's needed for chains like an
-arm. To do it in parallel, joints are **colored** so joints of the same color share no moving body. Each color is
-solved as one batch, colors one after another. GPU PhysX and Box2D do the same.
+- **Locked rows** are rigid (`A Δλ = -(G v + bias · C)`), with Box2D's 60 Hz position-correction rate.
+- **Motor rows** are PhysX's implicit spring-damper `F = k (x_t - x) + c (v_t - v)`, solved for the end-of-substep
+  velocity: on the diagonal of A they add `γ = 1 / (h (c + h k))`. The commanded velocity is capped at `max_velocity`.
+- **Saturation.** Motors can't exceed `max_force`. After clamping, the locked rows are re-solved for the motor impulse
+  actually applied (`K_LL Δλ_L = -(r_L + K_LD Δλ_D)`), otherwise the joints and motors disagree and inject energy.
+- **Limits** run after, per joint, along the free direction projected off the locked rows (Schur complement), so a
+  motor pushing into a limit can't overrule it.
 
-For each joint, the locked rows (e.g. 3 linear + 2 angular for a hinge) are solved together as one 6×6 block.
-The free row (the hinge angle) carries the **drive** and the **limits**. Their impulses are projected so they don't
-pull on the locked rows (the Schur complement `e_free - K_LL⁻¹ K_L,free`). Without that, a strong motor pushing into a
-limit gets undone by the hinge's own anchor rows every pass.
-
-The drive is PhysX's implicit spring-damper: `F = k (x_target - x) + c (v_target - v)`, solved for the end-of-substep
-velocity, so even stiff servos stay stable.
-
-Angles come from a **swing-twist** split of the relative rotation: the twist about the axis is the joint angle, and
-the swing is the error the locked rows remove.
+Angles come from a **swing-twist** split of the relative rotation: the twist about the axis is the joint angle, the
+swing is the error the locked rows remove.
 
 ### Contacts: mass splitting
 
-Contacts are solved Jacobi style, all at once, with **mass splitting** (Tonge 2012). A body touching k contacts acts
-like k copies of mass m/k, one per contact, averaged afterwards. That converges like Gauss-Seidel with no ordering,
-which is how GPU solvers do contacts.
+Contacts are solved Jacobi style, all at once, with **mass splitting** (Tonge 2012): a body touching k contacts acts
+like k copies of mass m/k, one per contact, averaged afterwards. Each contact has 3 rows: normal (λ ≥ 0) and two
+friction directions with the Coulomb cone `|λt| ≤ μ λn`. Soft contacts: min(120 Hz, substep rate / 4).
 
-Each contact point has 3 rows: normal (λ ≥ 0, pushes apart) and two friction directions with the Coulomb cone
-`|λ_t| ≤ μ λ_n`.
+**Contact buffer.** Every candidate pair has fixed "slots" (box vs plane: 8, one per corner). Each step the 64
+deepest touching slots per env go into a fixed-size buffer, and only those are solved. Shapes never change (CUDA
+graphs), and a slot always means the same feature, so last step's impulse is handed back to it (warm starting).
 
-**Contact buffer.** Every candidate pair has fixed "slots", for example box-vs-plane has 8 (one per corner). Only a
-few touch at once, so each step the 64 deepest touching slots per env are copied into a fixed-size buffer and only
-those are solved. Shapes never change, which makes CUDA graphs possible. A slot always means the same feature
-("corner 3 of this box"), so last step's impulse is handed back to it (warm starting).
+**Sticky friction** (Catto's Solver2D "sticky", like PhysX friction anchors). Each contact remembers where it first
+touched on both bodies, and friction pulls those points back together, so a held block can't creep out of the
+gripper. The anchor resets when friction hits the Coulomb limit (real sliding) or drifts > 5 mm (a rolling wheel).
 
-**Sticky friction** (Catto's Solver2D "sticky", like PhysX friction anchors). Velocity-level friction alone lets a
-held block creep slowly out of a gripper. Each contact therefore remembers where it first touched on both bodies,
-and friction also pulls those two points back together. When friction hits the Coulomb limit (real sliding), or
-an anchor drifts more than 5 mm from the contact point (a rolling wheel), the anchor resets.
+**Omni wheels.** A cylinder with `"omni": true` grips along its rolling direction (μ) but only has its passive
+rollers' friction (0.02) along its axle. The two directions are clamped independently, which is what the rollers do,
+so kiwi drive works: forward / strafe / spin within 2-5 % of the commanded speed.
 
-**Restitution** runs after the substeps. Contacts that were closing faster than 0.5 m/s get pushed to
-`-e × (closing speed)`.
+**Soft contacts and light parts.** Soft contact stiffness is relative to the effective mass, so a contact sinks by
+about F / (m_eff ω²). That's why the SO-101's 12 g jaw is simulated at 60 g. Through the servo's 345:1 gearbox the
+motor's rotor makes it act far heavier (MuJoCo calls this armature). At 12 g, the squeeze went through the block.
 
 ### Collision detection
 
 `physics/collision.py`, batched over (envs, pairs):
 
-- plane vs sphere / box (8 corners) / cylinder (4 rim points per cap, deepest first): exact.
+- plane vs sphere / box (8 corners) / cylinder (4 rim points per cap): exact.
 - sphere vs sphere / box / cylinder: closest point on the solid, exact.
-- box vs box: **separating axis test** over 15 axes (3 + 3 face normals, 9 edge × edge). For a face axis, the contact
-  polygon is the intersection of the reference face rectangle and the incident face, and its corners are always among
-  24 candidates: incident corners inside the rectangle, rectangle corners inside the incident face, and edge × edge
-  crossings. For an edge axis it's the closest points of the two edges.
-- box vs cylinder: approximated by sampling rim points and box corners (good enough for wheels bumping blocks).
+- box vs box: **separating axis test** over 15 axes. For a face axis, the contact polygon (reference face ∩ incident
+  face) has its corners among 24 candidate features; for an edge axis, the closest points of the two edges.
+- box vs cylinder: sampled rim points and box corners (good enough for wheels bumping blocks).
 
 ### Speed
 
-Everything is tensor ops, so the per-step cost is mostly kernel launches. `World.enable_cuda_graph()` records one
-step and replays it as a single launch. Measured on an RTX 4070 laptop with the ToFuBot scene: about 15 ms per step
-for 1 env (realtime is 16.7 ms) and about **12,000 env-steps/s for 256 envs**.
+Everything is tensor ops, so cost is mostly GPU kernel launches. `World.enable_cuda_graph()` and
+`Renderer.enable_cuda_graph()` record a step / a camera render once and replay them as single launches. On an RTX
+4070 laptop with the LeKiwi scene: ~18 ms per step for 1 env (≈ 0.9× realtime in the editor), **~6,500 env-steps/s
+for 256 envs**, 2 cameras in ~1.8 ms for 1 env.
 
-The engine is checked against analytic answers:
+Checked against analytic answers:
 
 | test | measured | expected |
 |---|---|---|
@@ -235,96 +221,92 @@ The engine is checked against analytic answers:
 | box sliding to rest (μ = 0.5, 2 m/s) | 0.404 m | 0.408 m |
 | sphere sliding → rolling (2 m/s) | 1.424 m/s | 5/7 · 2 = 1.429 m/s |
 | ball dropped 0.5 m, e = 0.8 | rebounds 0.296 m | 0.302 m |
-| head-on billiard hit | e ≈ 0.89, momentum 0.99 | e = 0.95 minus friction |
+| SO-101 arm under gravity | 0.00° joint bend | rigid |
 
 ---
 
-## Part 4: ToFuBot
+## Part 4: LeKiwi
 
-`robot/tofubot.py`. A small cart with an arm. Frame: +x forward, +y up, +z to the robot's right.
+`robot/lekiwi.py`. [LeKiwi](https://github.com/SIGRobotics-UIUC/LeKiwi) (Hugging Face / SIGRobotics-UIUC): a round
+base on 3 omni wheels ("kiwi drive") with an [SO-101 arm](https://github.com/TheRobotStudio/SO-ARM100). Frame: +x
+forward, +y up, +z to the robot's right.
 
 ```
-chassis          30 x 6 x 18 cm box, 1.5 kg
-front wheels     chassis --steer_fl/fr (revolute about +y, position servo, ±0.6 rad)--> knuckle
-                 knuckle --spin_fl/fr (free revolute)--> wheel
-rear wheels      chassis --drive_rl/rr (revolute about -z, velocity motor, ±15 rad/s)--> wheel
-arm              chassis --turret (about +y)--> turret --shoulder (about -z)--> upper arm (16 cm)
-                 --elbow (about -z)--> forearm (14 cm)
-gripper          forearm --finger_l / finger_r (prismatic, 0 = closed, 0.035 m = open)--> fingers
-camera           64x64, 100° fov, fixed on the chassis front, 17 cm up, pitched 40° down
+base             cylinder r 12.5 cm, 1.5 kg; battery (0.3 kg) at the back as counterweight
+wheels           3 × 4" omni wheels at 120° (back, front-left, front-right), velocity motors
+arm              shoulder_pan -> shoulder_lift -> elbow_flex -> wrist_flex -> wrist_roll -> gripper (jaw)
+cameras          front_cam (base front edge, 15° down) and wrist_cam (side of the gripper), 64x64 each
 ```
 
-Signs: steer + = left, wheel + = forward, shoulder/elbow + = lean forward (0 = arm straight up).
+The arm's joint positions, axes, limits and link masses come from the URDF (`so101_new_calib.urdf`, forward
+kinematics of its zero pose), so joint angles match the real arm's calibration. Links are boxes between joints.
+Every motor is a Feetech STS3215 servo: 2 N·m, 5.8 rad/s. The robot is built folded (`REST`), with each joint's
+`initial` set so the zeros stay at the URDF's.
 
-**Actions** (9 numbers in [-1, 1], in this order) are mapped linearly to joint targets: steer_fl, steer_fr
-(individual steering), drive_rl, drive_rr (individual wheel speeds), turret, shoulder, elbow (absolute angles),
-finger_l, finger_r (opening).
+**Actions** (9 numbers in [-1, 1], in order): wheel_back, wheel_left, wheel_right (speeds, ±5.8 rad/s), then
+shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll, gripper (absolute angles within the URDF limits).
 
 ---
 
 ## Part 5: The Pick-and-Place Environment
 
-`robot/pick_place.py`. `PickPlaceEnv(num_envs, device, num_blocks)`. Each env has the robot, colored 4 cm blocks and
-matching colored 14 cm target zones on the floor. The robot must carry block i into zone i.
+`robot/pick_place.py`. `PickPlaceEnv(num_envs, device, num_blocks)`. Each env has LeKiwi, colored 3.5 cm blocks and
+matching colored target zones on the floor. The robot must carry block i into zone i.
 
 - **reset**: random robot heading, blocks and zones 0.45-0.95 m away and at least 0.25 m apart, random block yaw.
-- **step(action)**: sets joint targets, runs 6 physics steps (control at 10 Hz), returns
-  `obs, reward, done, info`. Envs that finish are reset automatically.
-- **observation**: `rgb` (E, 3, 64, 64) uint8 from the robot's own camera (rendered by ray casting in
-  `physics/render.py`), and `proprio` (E, 9): the 7 servo positions plus the 2 rear wheel speeds, normalized. Real
-  robots have joint encoders, so the policy gets them too.
+- **step(action)**: sets joint targets, runs 6 physics steps (control at 10 Hz), returns `obs, reward, done, info`.
+  Envs that finish are reset automatically.
+- **observation**: `rgb` (E, 6, 64, 64) uint8: front camera RGB then wrist camera RGB, rendered by ray casting.
+  `proprio` (E, 9): the 6 arm joint angles and 3 wheel speeds, normalized.
 - **reward**: potential-based shaping, `r = Φ(s') - Φ(s) + 10 per delivered block`, with
-  `Φ = -(|gripper - block| + 2 |block - zone|)`. This reward is for PPO. Behavior cloning ignores it.
-- **success**: every block resting inside its zone. Episodes end on success, if the robot flips, or after 300 control
+  `Φ = -(|gripper - block| + 2 |block - zone|)`. For PPO; behavior cloning ignores it.
+- **success**: every block resting inside its zone. Episodes end on success, a flipped base, or after 300 control
   steps per block.
 
 ---
 
 ## Part 6: Learning (`back/ml/`)
 
-Reinforcement learning from pixels alone almost never solves a long task like drive → grasp → carry → place. The
-reward is too sparse. Real robot learning starts with demonstrations, so this does too:
+Pure RL from pixels almost never solves a long task like drive → grasp → carry → place (the reward is too sparse).
+Real robot learning starts from demonstrations, so this does too.
 
-**1. Scripted expert** (`ml/expert.py`). It cheats: it reads true positions from the simulator. It's a state machine
-per env: approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat. It drives with
-pure pursuit and true Ackermann steering: each front wheel gets its own angle and each rear wheel its own speed, so
-every wheel rolls around the same turn center. It backs up in a 3-point turn when the target is inside the turning
-circle. It reaches with 2-link inverse kinematics and rate-limits its targets like a real servo. It succeeded in 48 of
-48 test episodes.
+**1. Scripted expert** (`ml/expert.py`). It cheats: it reads true positions from the simulator. A state machine per
+env: approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat.
+- driving: holonomic, straight at the stopping point while turning to face the goal, kiwi inverse kinematics to wheel
+  speeds.
+- arm: top-down 5-joint inverse kinematics (gripper straight down, pan toward the block, wrist roll aligns the jaws
+  with the block's faces). The grasp pose is locked once the jaws close, so it doesn't chase a nudged block.
+- targets are rate-limited like a real servo. 90 % of test episodes succeed.
 
-**2. Collect** (`python -m ml.collect --envs 128 --episodes 500`) keeps only successful expert episodes and
-writes `back/data/bc/`, one row per control step:
+**2. Collect** (`python -m ml.collect --envs 128 --episodes 500`) keeps only successful episodes and writes
+`back/data/bc/`, one row per control step:
 
 ```
-frames.npy   (T, 64, 64, 3) uint8     what the camera saw
+frames.npy   (T, 64, 64, 6) uint8     front RGB, then wrist RGB
 proprio.npy  (T, 9) float32           joint readings
 actions.npy  (T, 9) float32           what the expert did, in [-1, 1]
 episode.npy  (T,) int32               episode id (frame stacks never cross episodes)
 meta.json    {"frames": T, "episodes": n, "attempts": m}   only the first T rows are valid
 ```
 
-500 episodes ≈ 60k frames ≈ 0.75 GB.
+**3. Policy** (`ml/policy.py`). Input: the last 3 frames of both cameras stacked (18 channels) + the 9 joint readings.
+Nature-DQN conv encoder → 512 → 256 → 9 actions (tanh), plus a value head for PPO.
 
-**3. Policy** (`ml/policy.py`). Input: the last 3 camera frames stacked (9 channels, so it sees motion) plus the 9 joint
-readings. Nature-DQN conv encoder → 512 → 256 → 9 actions (tanh), plus a value head for PPO.
-
-**4. Behavior cloning** (`python -m ml.train_bc`) regresses the expert's actions from pixels (MSE), with random-shift
-augmentation (DrQ: pad 4 px, random crop) so it doesn't overfit exact pixel positions. Every 5000 steps it runs 64
-envs to measure the real success rate and keeps the best as `back/checkpoints/bc.pt`
+**4. Behavior cloning** (`python -m ml.train_bc`): MSE to the expert's actions with random-shift augmentation (DrQ).
+Every 5000 steps it measures the real success rate in 64 envs and keeps the best as `back/checkpoints/bc.pt`
 (`{"policy": state_dict, "step": int, "success": float}`).
 
-**5. PPO** (`python -m ml.train_ppo --init checkpoints/bc.pt`) fine-tunes it on the shaped reward: 256 envs,
-32-step rollouts, GAE, clipped objective, gaussian exploration around the BC actions, reward scaled by the running
-std of returns. Saves `back/checkpoints/ppo.pt` in the same format.
+**5. PPO** (`python -m ml.train_ppo --init checkpoints/bc.pt`): 256 envs, 32-step rollouts, GAE, clipped objective,
+gaussian exploration around the BC actions, reward scaled by the running std of returns. Saves `checkpoints/ppo.pt`.
 
-**6. Evaluate** (`python -m ml.eval --ckpt checkpoints/ppo.pt`) prints the success rate and records one episode
-to `logs/policy_rollout/` to watch in Playback mode.
+**6. Evaluate** (`python -m ml.eval --ckpt checkpoints/ppo.pt`) prints the success rate and records one episode to
+`logs/policy_rollout/` to watch in Playback mode.
 
 ---
 
 ## Part 7: Recordings
 
-`recording.py`. A recording is the scene once plus poses per frame, so meshes aren't stored every frame:
+`recording.py`. The scene once, then poses per frame:
 
 ```
 logs/{name}/scene.json     the scene (shapes, colors, ids)
@@ -333,8 +315,7 @@ logs/{name}/{chunk}.bin    little-endian, 1000 frames per chunk:
   per frame: time f32, then num_bodies × (px py pz qw qx qy qz) f32 in scene body order
 ```
 
-`python -m simulate` writes the example scenes to `back/scenes/` and records `three_body` (3000 s) and `billiards`
-(10 s).
+`python -m ml.eval` writes one (`logs/policy_rollout/`).
 
 ---
 
@@ -346,7 +327,7 @@ logs/{name}/{chunk}.bin    little-endian, 1000 frames per chunk:
 GET  /scenes                    {"scenes": [names]}
 GET  /scenes/{name}             scene JSON
 PUT  /scenes/{name}             save scene JSON
-GET  /prefabs/tofubot           ToFuBot bodies / joints / cameras at the origin
+GET  /prefabs/lekiwi            LeKiwi bodies / joints / cameras at the origin
 GET  /recordings                {"recordings": [names]}
 GET  /recordings/{name}/scene   scene of a recording
 GET  /recordings/{name}/{chunk} binary chunk
@@ -357,7 +338,7 @@ Websocket messages:
 
 ```
 client -> server   {"type": "play", "scene": {...}}   pause / resume / step / stop
-                   {"type": "drive", "targets": {"tofubot/steer_fl": 0.3, ...}}
+                   {"type": "drive", "targets": {"lekiwi/shoulder_lift": 0.3, ...}}
                    {"type": "autopilot", "mode": "off" | "expert" | "policy"}
 server -> client   {"type": "frame", "time", "poses": [[px,py,pz,qw,qx,qy,qz], ...], "joints": {id: value},
                     "cameras": [{"id", "width", "height", "rgb": base64}]}     ~30 per second
@@ -365,30 +346,27 @@ server -> client   {"type": "frame", "time", "poses": [[px,py,pz,qw,qx,qy,qz], .
                    {"type": "error", "message"}
 ```
 
-`live.py` holds the session: one world (CUDA graph on GPU) stepped in real time. The autopilot runs the expert, or the
-trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's camera, at 10 Hz.
+`live.py` holds the session: one world (physics + cameras as CUDA graphs on GPU) stepped in real time. The autopilot
+runs the expert, or the trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's cameras, at 10 Hz.
 
-**The editor** (`front/`) is CAD-style: scene tree on the left, properties on the right, toolbar on top.
+**The editor** (`front/`) is CAD-style: scene tree left, properties right, toolbar on top.
 
-- **Edit**: add boxes / spheres / cylinders, insert a ToFuBot, click to select, move/rotate gizmo with snapping,
-  create joints between two shift-selected bodies, edit every field (rotation is shown as XYZ degrees but stored as a
-  quaternion), see volume and mass. Standard views (Top / Front / Right / Iso), perspective / ortho. Save to
-  `back/scenes/`.
-- **Simulate**: Play sends the edited scene to the server. Drive ToFuBot with the keyboard (W/S drive, A/D steer,
-  Y/U turret, H/J shoulder, N/M elbow, Space gripper), or switch the autopilot to expert / policy. The robot's
-  camera feed and joint values are shown live. Stop returns to the unmodified scene.
+- **Edit**: add boxes / spheres / cylinders, insert a LeKiwi, click to select, move/rotate gizmo with snapping, joints
+  between two shift-selected bodies, every field editable (rotation shown as XYZ degrees, stored as a quaternion).
+- **Simulate**: Play sends the edited scene to the server. Drive LeKiwi with the keyboard:
+  W/S forward/back, A/D strafe, Q/E turn, Y/U pan, H/J shoulder, N/M elbow, I/K wrist, O/L wrist roll,
+  Space gripper. Or switch the autopilot to expert / policy. Both camera feeds and the joint values are shown live.
 - **Playback**: pick a recording, play / pause / speed / scrub.
+- **Camera**: left-drag orbits, ctrl+left-drag or right-drag pans (camera and pivot together), wheel zooms at a
+  constant speed (pushing the pivot ahead when you pass it).
 
 ---
 
 ## Running Everything
 
 ```bash
-pip install fastapi uvicorn          # torch, numpy already installed
-cd back
-python -m simulate                   # scenes + example recordings (three_body takes a while)
-python -m api                        # server on :8080
-cd ../front && npm run dev           # editor on http://localhost:5173
+pip install -r back/requirements.txt
+python main.py                       # backend (:8080) + editor (http://localhost:5173)
 
 # learning (run in tmux, from back/)
 python -m ml.collect --envs 128 --episodes 500

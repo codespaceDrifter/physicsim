@@ -117,9 +117,8 @@ class World:
         self.contact_soft = soft_params(min(120.0, 0.25 / self.h), 10.0, self.h)
         # joints: Box2D v3 default 60 Hz, damping ratio 2
         self.joint_soft = soft_params(60.0, 2.0, self.h)
-        # gauss-seidel joint sweeps per solve/relax. one sweep + warm starting oscillates and gains energy when a light
-        # body carries several heavy long-lever joints (a hub with 4 arms), two sweeps are stable.
-        self.joint_iterations = 2
+        # joint passes per solve/relax. the joint solve is one exact global solve, so one pass is enough
+        self.joint_iterations = 1
         # jacobi contact passes per solve/relax. mass splitting converges slower than gauss-seidel, so it gets a few.
         self.contact_iterations = 2
 
@@ -238,9 +237,11 @@ class World:
                 self.joints.solve(use_bias=False)
             for _ in range(self.contact_iterations):
                 self.contacts.solve(use_bias=False)
-        # restitution is a Jacobi pass too: iterate so mass splitting converges to the full bounce
-        for _ in range(2 * self.contact_iterations):
-            self.contacts.apply_restitution()
+        # restitution is a Jacobi pass too: iterate so mass splitting converges to the full bounce.
+        # skipped when nothing in the scene can bounce
+        if self.contacts.bouncy:
+            for _ in range(2 * self.contact_iterations):
+                self.contacts.apply_restitution()
 
     def reset(self, env_mask):
         # reset envs where env_mask (E,) is True to the scene's initial state

@@ -100,14 +100,14 @@ export function addPrimitive(type) {
   emit('scene', 'editor');
 }
 
-export async function insertTofubot() {
-  const prefab = await getJson('/prefabs/tofubot');
-  // first free namespace: tofubot/, tofubot2/, tofubot3/, ...
-  let prefix = 'tofubot/';
-  for (let n = 2; app.scene.bodies.some(b => b.id.startsWith(prefix)); n++) prefix = `tofubot${n}/`;
+export async function insertLekiwi() {
+  const prefab = await getJson('/prefabs/lekiwi');
+  // first free namespace: lekiwi/, lekiwi2/, lekiwi3/, ...
+  let prefix = 'lekiwi/';
+  for (let n = 2; app.scene.bodies.some(b => b.id.startsWith(prefix)); n++) prefix = `lekiwi${n}/`;
   const rename = (id) => {
-    if (!id.startsWith('tofubot/')) throw new Error(`prefab id "${id}" is not under tofubot/`);
-    return prefix + id.slice('tofubot/'.length);
+    if (!id.startsWith('lekiwi/')) throw new Error(`prefab id "${id}" is not under lekiwi/`);
+    return prefix + id.slice('lekiwi/'.length);
   };
   // place it 0.6 m beyond the farthest existing body along +z so it doesn't overlap anything
   const others = app.scene.bodies.filter(b => b.shape.type !== 'plane');

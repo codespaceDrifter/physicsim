@@ -4,7 +4,7 @@ import { getJson, putJson } from './api.js';
 import { newScene } from './model.js';
 import { toast } from './toast.js';
 import { setStandardView, setOrthographic } from './viewport.js';
-import { addPrimitive, insertTofubot, createJoint, duplicateSelection, deleteSelection, setGizmoMode, toggleSnap, frameSelection } from './editor.js';
+import { addPrimitive, insertLekiwi, createJoint, duplicateSelection, deleteSelection, setGizmoMode, toggleSnap, frameSelection } from './editor.js';
 import { sim, send, play } from './simClient.js';
 
 const sceneSelect = document.getElementById('scene-select');
@@ -66,7 +66,7 @@ document.getElementById('btn-save').onclick = async () => {
 document.getElementById('btn-box').onclick = () => addPrimitive('box');
 document.getElementById('btn-sphere').onclick = () => addPrimitive('sphere');
 document.getElementById('btn-cylinder').onclick = () => addPrimitive('cylinder');
-document.getElementById('btn-tofubot').onclick = () => insertTofubot();
+document.getElementById('btn-lekiwi').onclick = () => insertLekiwi();
 document.getElementById('btn-joint').onclick = () => createJoint(document.getElementById('joint-type').value);
 document.getElementById('btn-duplicate').onclick = () => duplicateSelection();
 document.getElementById('btn-delete').onclick = () => deleteSelection();

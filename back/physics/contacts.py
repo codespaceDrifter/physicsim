@@ -23,6 +23,9 @@ MAX_PUSH_VELOCITY = 3.0
 RESTITUTION_THRESHOLD = 0.5
 # contact buffer capacity per env. if more slots touch, the shallowest ones are dropped
 MAX_CONTACTS = 64
+# omni wheels (cylinder shape with "omni": true): friction across the wheel is only the small rolling friction of its
+# passive rollers, so the wheel grips along its rolling direction and slides freely along its axle
+ROLLER_FRICTION = 0.02
 # sticky friction anchors are dropped once they're this far from the current contact point (m): a rolling wheel's
 # anchor rotates away from the contact (rolling isn't slipping), a held block's anchors stay put
 ANCHOR_RANGE = 0.005
@@ -65,7 +68,15 @@ class Contacts:
         rest = torch.tensor([b['restitution'] for b in bodies], device=dev)
         # (S,) mixing rules (Box2D): geometric mean friction, max restitution
         self.slot_friction = torch.sqrt(fr[self.slot_a] * fr[self.slot_b])
+        for b in bodies:
+            assert not b['shape'].get('omni', False) or b['shape']['type'] == 'cylinder', f"{b['id']}: only cylinders can be omni wheels"
+        omni = torch.tensor([b['shape'].get('omni', False) for b in bodies], device=dev, dtype=torch.bool)
+        # (S,) slot touches an omni wheel. cylinders are always body B of a pair (highest shape code)
+        self.slot_omni = omni[self.slot_b]
+        assert not omni[self.slot_a].any(), 'omni wheel ended up as body A of a pair'
         self.slot_restitution = torch.maximum(rest[self.slot_a], rest[self.slot_b])
+        # any pair that can bounce at all
+        self.bouncy = bool((self.slot_restitution > 0).any())
 
         E = world.E
         # contact buffer capacity
@@ -152,12 +163,20 @@ class Contacts:
         self.anchor_a = torch.where(stick & near, prev[..., 3:6], self.local_ra)
         self.anchor_b = torch.where(stick & near, prev[..., 6:9], self.local_rb)
         self.sliding = torch.zeros_like(valid)
-        # (E, C, 3, 3) contact basis rows: normal, then friction directions t1, t2 orthogonal to it
+        # (E, C, 3, 3) contact basis rows: normal, then friction directions t1, t2 orthogonal to it.
+        # omni wheels: t1 = rolling direction (axle × n), t2 = along the axle
         n = self.normal
         ref = torch.where((n[..., :1].abs() < 0.9), const([1., 0., 0.], n.device), const([0., 1., 0.], n.device))
-        t1 = torch.cross(n, ref, dim=-1)
+        axle = quat_rotate(quat_b, const([0., 1., 0.], n.device).expand_as(n))
+        rolling = torch.cross(axle, n, dim=-1)
+        omni = self.slot_omni[slot] & (torch.linalg.norm(rolling, dim=-1) > 0.1)
+        t1 = torch.where(omni.unsqueeze(-1), rolling, torch.cross(n, ref, dim=-1))
         t1 = t1 / torch.linalg.norm(t1, dim=-1, keepdim=True)
         self.basis = torch.stack([n, t1, torch.cross(n, t1, dim=-1)], dim=-2)
+        # (E, C, 2) friction coefficient along t1, t2, and (E, C) omni contact: its two directions are independent
+        # (the rollers decouple them), so they're clamped separately instead of by one circular cone
+        self.mu = torch.stack([self.friction, torch.where(omni, ROLLER_FRICTION, self.friction)], dim=-1)
+        self.omni = omni
         # mass splitting counts: (E, N) number of valid contacts touching each body
         count = torch.zeros(w.E, w.N, device=w.device)
         count.scatter_add_(1, self.idx_a, valid.float())
@@ -243,11 +262,14 @@ class Contacts:
             new_t = old_t - mass_scale * (rv[..., 1:] + bias_t) * self.mass[..., 1:] - impulse_scale * old_t
         else:
             new_t = old_t - rv[..., 1:] * self.mass[..., 1:]
-        limit = (self.friction * new_n).unsqueeze(-1)
+        # Coulomb: circular cone |λt| <= μ λn, or per direction |λi| <= μi λn for omni wheels
+        limit = self.mu * new_n.unsqueeze(-1)
         t_len = torch.linalg.norm(new_t, dim=-1, keepdim=True)
-        over = t_len > limit
-        self.sliding = over.squeeze(-1) & self.valid
-        new_t = torch.where(over, new_t * limit / t_len.clamp_min(1e-12), new_t)
+        circle = torch.where(t_len > limit[..., :1], new_t * limit[..., :1] / t_len.clamp_min(1e-12), new_t)
+        boxed = torch.maximum(torch.minimum(new_t, limit), -limit)
+        clamped = torch.where(self.omni.unsqueeze(-1), boxed, circle)
+        self.sliding = ((clamped - new_t).abs().amax(-1) > 1e-9) & self.valid
+        new_t = clamped
         new_t = torch.where(self.valid.unsqueeze(-1), new_t, 0.0)
         new = torch.cat([new_n.unsqueeze(-1), new_t], dim=-1)
         self.apply(new - self.lam)

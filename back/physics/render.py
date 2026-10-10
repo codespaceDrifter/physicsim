@@ -41,7 +41,29 @@ class Renderer:
         # (Ns,) body indices of each shape type
         self.by_type = {t: (world.shape_type == t).nonzero().view(-1) for t in (PLANE, SPHERE, BOX, CYLINDER)}
 
+    def enable_cuda_graph(self):
+        # record render() as a CUDA graph (one launch instead of thousands of small kernels). call after the world's
+        # enable_cuda_graph(), so the poses it reads live at fixed addresses
+        stream = torch.cuda.Stream()
+        stream.wait_stream(torch.cuda.current_stream())
+        with torch.cuda.stream(stream):
+            for _ in range(2):
+                self.render_eager()
+        torch.cuda.current_stream().wait_stream(stream)
+        graph = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(graph):
+            # (E, H, W, 3) fixed-address output
+            self.graph_out = self.render_eager()
+        self.graph = graph
+
     def render(self):
+        # (E, H, W, 3) uint8. with a CUDA graph, the result is overwritten by the next render: copy it to keep it
+        if getattr(self, 'graph', None) is None:
+            return self.render_eager()
+        self.graph.replay()
+        return self.graph_out
+
+    def render_eager(self):
         w = self.world
         out = [self.render_envs(slice(s, s + self.env_chunk)) for s in range(0, w.E, self.env_chunk)]
         return torch.cat(out, 0)

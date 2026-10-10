@@ -85,6 +85,14 @@ def quat_from_two_axes(x_axis):
     return q / torch.linalg.norm(q, dim=-1, keepdim=True)
 
 
+def spd_inverse(A):
+    # inverse of symmetric positive definite matrices (..., n, n) by Cholesky: A = L Lᵀ -> A⁻¹ = L⁻ᵀ L⁻¹.
+    # unlike torch.linalg.inv this can be recorded in a CUDA graph
+    L = torch.linalg.cholesky_ex(A)[0]
+    L_inv = torch.linalg.solve_triangular(L, torch.eye(A.shape[-1], device=A.device).expand_as(A), upper=False)
+    return L_inv.transpose(-1, -2) @ L_inv
+
+
 def wrap_angle(a):
     # wrap to (-π, π]
     return torch.remainder(a + torch.pi, 2 * torch.pi) - torch.pi

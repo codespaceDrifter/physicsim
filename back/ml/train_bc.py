@@ -45,7 +45,7 @@ for step in range(1, args.steps + 1):
     idx = torch.randint(0, T, (args.batch,), device=device)
     # (B, FRAME_STACK) rows oldest -> newest, clamped to the episode start
     rows = torch.maximum(idx[:, None] - torch.arange(FRAME_STACK - 1, -1, -1, device=device), ep_start[idx][:, None])
-    # (B, FRAME_STACK, 3, 64, 64) -> (B, 3*FRAME_STACK, 64, 64)
+    # (B, FRAME_STACK, FRAME_CHANNELS, 64, 64) -> (B, FRAME_CHANNELS*FRAME_STACK, 64, 64)
     stacked = random_shift(frames[rows].flatten(1, 2))
     pred, _ = policy(stacked, proprio[idx])
     loss = ((pred - actions[idx]) ** 2).mean()

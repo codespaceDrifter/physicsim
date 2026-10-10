@@ -1,4 +1,4 @@
-// Simulate-mode right panel: sim state/time, joint readout, ToFuBot keyboard teleop + autopilot, camera feeds.
+// Simulate-mode right panel: sim state/time, joint readout, LeKiwi keyboard teleop + autopilot, camera feeds.
 import { app, on } from './state.js';
 import { findItem } from './model.js';
 import { onTick } from './viewport.js';
@@ -13,21 +13,29 @@ const gripperEl = document.getElementById('gripper-state');
 const jointReadout = document.getElementById('joint-readout');
 const feedsEl = document.getElementById('feeds');
 
-const P = 'tofubot/'; // only the first ToFuBot (namespace tofubot/) is teleoperated
-const DRIVE_SPEED = 15; // rad/s rear wheel velocity target while W/S held
-const STEER_ANGLE = 0.5; // rad front wheel steer while A/D held, positive = left turn
+const P = 'lekiwi/'; // only the first LeKiwi (namespace lekiwi/) is teleoperated
+const DRIVE_SPEED = 0.2; // m/s base speed while W/S (forward/back) or A/D (strafe) held
+const TURN_SPEED = 1.0; // rad/s base yaw rate while Q/E held, Q = turn left
+// kiwi drive geometry, same as back/robot/lekiwi.py: wheel angles around the base (from +x toward +z), ring radius, wheel radius
+const WHEELS = { wheel_back: Math.PI, wheel_left: -Math.PI / 3, wheel_right: Math.PI / 3 }; // {name: angle rad}
+const WHEEL_RING = 0.10;
+const WHEEL_RADIUS = 0.0508;
+const WHEEL_MAX_SPEED = 5.8; // rad/s, STS3215 top speed
 const ARM_RATE = 1.2; // rad/s arm joint target change while key held
-const GRIPPER_OPEN = 0.035; // m finger target when open (closed = 0)
+const GRIPPER_OPEN = 0.8; // rad jaw target when open
+const GRIPPER_CLOSED = -0.17; // rad jaw target when closed (squeezes)
 const SEND_INTERVAL = 0.05; // s between drive messages (20 Hz)
 // key -> [joint name, direction] for incremental arm controls
 const ARM_KEYS = {
-  y: ['turret', 1], u: ['turret', -1],
-  h: ['shoulder', 1], j: ['shoulder', -1],
-  n: ['elbow', 1], m: ['elbow', -1],
+  y: ['shoulder_pan', -1], u: ['shoulder_pan', 1],
+  h: ['shoulder_lift', 1], j: ['shoulder_lift', -1],
+  n: ['elbow_flex', 1], m: ['elbow_flex', -1],
+  i: ['wrist_flex', 1], k: ['wrist_flex', -1],
+  o: ['wrist_roll', -1], l: ['wrist_roll', 1],
 }; // {key: [joint name, +1 | -1]}
 
 const held = new Set(); // {key} teleop keys currently held, lowercase
-let hasRobot = false; // shown scene contains tofubot/ joints
+let hasRobot = false; // shown scene contains lekiwi/ joints
 let targets = {}; // {jointId: number} current teleop drive targets
 let lastSent = {}; // {jointId: number} targets the server already has
 let gripperOpen = false;
@@ -39,12 +47,12 @@ const feeds = new Map(); // {cameraId: {canvas, ctx, image: ImageData}}
 on('simPlay', () => {
   targets = {};
   if (hasRobot) {
-    for (const name of ['steer_fl', 'steer_fr', 'drive_rl', 'drive_rr', 'turret', 'shoulder', 'elbow', 'finger_l', 'finger_r']) {
+    for (const name of [...Object.keys(WHEELS), 'shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper']) {
       const joint = findItem(app.scene, 'joint', P + name);
-      if (joint.drive === null) throw new Error(`ToFuBot joint "${joint.id}" has no drive`);
+      if (joint.drive === null) throw new Error(`LeKiwi joint "${joint.id}" has no drive`);
       targets[joint.id] = joint.drive.target;
     }
-    gripperOpen = targets[`${P}finger_l`] > GRIPPER_OPEN / 2;
+    gripperOpen = targets[`${P}gripper`] > GRIPPER_OPEN / 2;
   }
   lastSent = { ...targets };
   jointReadout.innerHTML = '';
@@ -124,7 +132,7 @@ on('simFrame', (msg) => {
 });
 
 // ---------- keyboard teleop ----------
-const TELEOP_KEYS = new Set(['w', 'a', 's', 'd', ...Object.keys(ARM_KEYS)]); // {key}
+const TELEOP_KEYS = new Set(['w', 'a', 's', 'd', 'q', 'e', ...Object.keys(ARM_KEYS)]); // {key}
 
 window.addEventListener('keydown', (e) => {
   if (!hasRobot || e.target.closest('input, select, textarea') || e.ctrlKey || e.metaKey) return;
@@ -145,12 +153,20 @@ onTick((dt) => {
   if (!hasRobot || sim.state !== 'running' || sim.autopilot !== 'off') return;
 
   // held -> fixed value, released -> 0
-  const drive = (held.has('w') ? DRIVE_SPEED : 0) - (held.has('s') ? DRIVE_SPEED : 0);
-  const steer = (held.has('a') ? STEER_ANGLE : 0) - (held.has('d') ? STEER_ANGLE : 0);
-  targets[`${P}drive_rl`] = drive;
-  targets[`${P}drive_rr`] = drive;
-  targets[`${P}steer_fl`] = steer;
-  targets[`${P}steer_fr`] = steer;
+  // base velocity: forward vx, right vz, yaw rate wy (+ = left), then kiwi inverse kinematics per wheel:
+  // wheel center velocity v + ω × p (p = ring * axle), rolled along axle × up
+  const vx = (held.has('w') ? DRIVE_SPEED : 0) - (held.has('s') ? DRIVE_SPEED : 0);
+  const vz = (held.has('d') ? DRIVE_SPEED : 0) - (held.has('a') ? DRIVE_SPEED : 0);
+  const wy = (held.has('q') ? TURN_SPEED : 0) - (held.has('e') ? TURN_SPEED : 0);
+  const speeds = Object.values(WHEELS).map(angle => {
+    const ax = Math.cos(angle);
+    const az = Math.sin(angle);
+    const cx = vx + wy * WHEEL_RING * az;
+    const cz = vz - wy * WHEEL_RING * ax;
+    return (cx * -az + cz * ax) / WHEEL_RADIUS;
+  }); // [rad/s] in WHEELS order
+  const scale = Math.min(1, WHEEL_MAX_SPEED / Math.max(...speeds.map(Math.abs), 1e-9));
+  Object.keys(WHEELS).forEach((name, i) => { targets[P + name] = speeds[i] * scale; });
   // held -> target moves at ARM_RATE, clamped to the joint's limits
   for (const [key, [name, dir]] of Object.entries(ARM_KEYS)) {
     if (!held.has(key)) continue;
@@ -160,8 +176,7 @@ onTick((dt) => {
     if (limits !== null) value = Math.min(Math.max(value, limits[0]), limits[1]);
     targets[id] = value;
   }
-  targets[`${P}finger_l`] = gripperOpen ? GRIPPER_OPEN : 0.0;
-  targets[`${P}finger_r`] = gripperOpen ? GRIPPER_OPEN : 0.0;
+  targets[`${P}gripper`] = gripperOpen ? GRIPPER_OPEN : GRIPPER_CLOSED;
 
   sinceSend += dt;
   if (sinceSend < SEND_INTERVAL) return;

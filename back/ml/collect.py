@@ -1,7 +1,7 @@
 # Collect behavior cloning data: run the scripted expert in parallel envs and keep only successful episodes.
 #
 # writes to --out (default data/bc/), one row per control step:
-#   frames.npy   (T, 64, 64, 3) uint8    camera frame the robot saw before acting
+#   frames.npy   (T, 64, 64, 6) uint8    camera frames the robot saw before acting: front RGB, then wrist RGB
 #   proprio.npy  (T, PROPRIO_DIM) float32 joint readings at that moment
 #   actions.npy  (T, ACTION_DIM) float32  expert action in [-1, 1]
 #   episode.npy  (T,) int32               episode id, so frame stacking never crosses episodes
@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from robot.pick_place import PickPlaceEnv, PROPRIO_DIM, ACTION_DIM
 from ml.expert import Expert
+from ml.policy import FRAME_CHANNELS
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--envs', type=int, default=128)
@@ -30,16 +31,15 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 os.makedirs(args.out, exist_ok=True)
 env = PickPlaceEnv(args.envs, device, num_blocks=args.blocks, seed=args.seed)
 if device == 'cuda':
-    env.world.enable_cuda_graph()
-    env.reset(torch.ones(args.envs, dtype=torch.bool, device=device))
+    env.enable_cuda_graph()
 expert = Expert(args.envs, args.blocks)
 
-frames = np.lib.format.open_memmap(os.path.join(args.out, 'frames.npy'), mode='w+', dtype=np.uint8, shape=(args.max_frames, 64, 64, 3))
+frames = np.lib.format.open_memmap(os.path.join(args.out, 'frames.npy'), mode='w+', dtype=np.uint8, shape=(args.max_frames, 64, 64, FRAME_CHANNELS))
 proprio = np.lib.format.open_memmap(os.path.join(args.out, 'proprio.npy'), mode='w+', dtype=np.float32, shape=(args.max_frames, PROPRIO_DIM))
 actions = np.lib.format.open_memmap(os.path.join(args.out, 'actions.npy'), mode='w+', dtype=np.float32, shape=(args.max_frames, ACTION_DIM))
 episode = np.lib.format.open_memmap(os.path.join(args.out, 'episode.npy'), mode='w+', dtype=np.int32, shape=(args.max_frames,))
 
-# per env lists of the running episode: [(frame (64,64,3), proprio, action)]
+# per env lists of the running episode: [(frames (64, 64, 6), proprio, action)]
 running = [[] for _ in range(args.envs)]
 T = 0  # rows written
 kept = 0  # successful episodes written

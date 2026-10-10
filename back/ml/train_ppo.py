@@ -34,8 +34,7 @@ args = parser.parse_args()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 env = PickPlaceEnv(args.envs, device, num_blocks=1, seed=args.seed)
 if device == 'cuda':
-    env.world.enable_cuda_graph()
-    env.reset(torch.ones(args.envs, dtype=torch.bool, device=device))
+    env.enable_cuda_graph()
 policy = Policy().to(device)
 if args.init:
     policy.load_state_dict(torch.load(args.init, map_location=device)['policy'])

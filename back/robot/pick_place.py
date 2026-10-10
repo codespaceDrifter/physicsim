@@ -1,13 +1,14 @@
-# ToFuBot pick-and-place: batched environment. each env has the robot, colored blocks and matching colored target
+# LeKiwi pick-and-place: batched environment. each env has the robot, colored blocks and matching colored target
 # zones on the floor. the robot must carry block i into zone i. observations are camera pixels + joint readings.
 import math
 import torch
 from physics.world import World
 from physics.render import Renderer
 from physics.math3d import quat_mul, quat_rotate, quat_from_rotvec
-from robot.tofubot import tofubot, ACTUATORS, STEER_LIMIT, WHEEL_MAX_SPEED, ARM_LIMITS, FINGER_OPEN, PREFIX
+from robot.lekiwi import lekiwi, ACTUATORS, STS3215_SPEED, ARM_LIMITS, PREFIX
 
-BLOCK_SIZE = 0.04
+# sized for the SO-101 gripper
+BLOCK_SIZE = 0.035
 ZONE_SIZE = 0.14
 # block i and zone i share a hue
 BLOCK_COLORS = ['#d93b3b', '#3b7fd9', '#3bb34a']
@@ -25,9 +26,12 @@ EPISODE_STEPS_PER_BLOCK = 300
 GRIP_W = 1.0
 PLACE_W = 2.0
 SUCCESS_REWARD = 10.0
-# joint readings fed to the policy: positions of these joints + speeds of the rear wheels
-PROPRIO_JOINTS = ['steer_fl', 'steer_fr', 'turret', 'shoulder', 'elbow', 'finger_l', 'finger_r']
-PROPRIO_DIM = len(PROPRIO_JOINTS) + 2
+# joint readings fed to the policy: arm joint angles + wheel speeds
+PROPRIO_JOINTS = ['shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper']
+WHEELS = ['wheel_back', 'wheel_left', 'wheel_right']
+PROPRIO_DIM = len(PROPRIO_JOINTS) + len(WHEELS)
+# cameras stacked on the channel axis of the "rgb" observation: front RGB, then wrist RGB
+CAMERAS = ['front_cam', 'wrist_cam']
 ACTION_DIM = len(ACTUATORS)
 
 
@@ -41,7 +45,7 @@ def scene(num_blocks):
     ground = static_box('ground', None, [0.0, 0.0, 0.0], '#9a9a9a', True)
     ground['shape'] = {'type': 'plane'}
     ground['friction'] = 1.0
-    bot = tofubot()
+    bot = lekiwi()
     blocks = []  # [body dict]
     zones = []  # [body dict]
     for i in range(num_blocks):
@@ -51,43 +55,42 @@ def scene(num_blocks):
         blocks.append(block)
         # zones are thin static markers that nothing collides with
         zones.append(static_box(f'zone/{i}', [ZONE_SIZE, 0.002, ZONE_SIZE], [-0.6 * math.cos(angle), 0.001, 0.6 * math.sin(angle)], ZONE_COLORS[i], False))
-    return {'name': 'tofubot_pick', 'settings': {'dt': DT, 'substeps': SUBSTEPS, 'gravity': [0.0, -9.81, 0.0], 'G': 0.0},
+    return {'name': 'lekiwi_pick', 'settings': {'dt': DT, 'substeps': SUBSTEPS, 'gravity': [0.0, -9.81, 0.0], 'G': 0.0},
             'bodies': [ground] + bot['bodies'] + blocks + zones, 'joints': bot['joints'], 'cameras': bot['cameras']}
 
 
 class PickPlaceEnv:
     # scene_json: use this scene as is (e.g. edited in the editor) instead of a randomized layout. it must contain
-    # the tofubot and bodies "block/0".."block/{num_blocks-1}", "zone/0"..
+    # the lekiwi and bodies "block/0".."block/{num_blocks-1}", "zone/0"..
     def __init__(self, num_envs, device, num_blocks=1, seed=0, scene_json=None):
         self.E = num_envs
         self.device = device
         self.num_blocks = num_blocks
         self.max_steps = EPISODE_STEPS_PER_BLOCK * num_blocks
         self.world = World(scene_json if scene_json is not None else scene(num_blocks), num_envs, device)
-        self.camera = Renderer(self.world, self.world.scene['cameras'][0])
+        # [Renderer] one per camera, in CAMERAS order
+        cams = {c['id']: c for c in self.world.scene['cameras']}
+        self.cameras = [Renderer(self.world, cams[PREFIX + n]) for n in CAMERAS]
         self.gen = torch.Generator(device=device).manual_seed(seed)
         w = self.world
         # (R,) body indices of robot parts, block i, zone i
         self.robot = torch.tensor([i for i, bid in enumerate(w.body_ids) if bid.startswith(PREFIX)], device=device)
         self.blocks = torch.tensor([w.body_index[f'block/{i}'] for i in range(num_blocks)], device=device)
         self.zones = torch.tensor([w.body_index[f'zone/{i}'] for i in range(num_blocks)], device=device)
-        self.chassis = w.body_index[PREFIX + 'chassis']
-        self.fingers = torch.tensor([w.body_index[PREFIX + 'finger_l'], w.body_index[PREFIX + 'finger_r']], device=device)
+        self.base = w.body_index[PREFIX + 'base']
+        # (2,) the two gripper jaws; their mean is the grip point
+        self.jaws = torch.tensor([w.body_index[PREFIX + 'gripper'], w.body_index[PREFIX + 'jaw']], device=device)
         # (A,) joint index of each actuator in action order
         self.act_joints = torch.tensor([w.joints.index[PREFIX + name] for name, kind in ACTUATORS], device=device)
         self.proprio_joints = torch.tensor([w.joints.index[PREFIX + n] for n in PROPRIO_JOINTS], device=device)
-        self.wheel_joints = torch.tensor([w.joints.index[PREFIX + 'drive_rl'], w.joints.index[PREFIX + 'drive_rr']], device=device)
+        self.wheel_joints = torch.tensor([w.joints.index[PREFIX + n] for n in WHEELS], device=device)
         # (A,) affine map from action in [-1, 1] to joint target: target = mid + half * action
         lo, hi = [], []  # [float], [float]
         for name, kind in ACTUATORS:
-            if kind == 'steer':
-                lo.append(-STEER_LIMIT), hi.append(STEER_LIMIT)
-            elif kind == 'wheel':
-                lo.append(-WHEEL_MAX_SPEED), hi.append(WHEEL_MAX_SPEED)
-            elif kind == 'arm':
-                lo.append(ARM_LIMITS[name][0]), hi.append(ARM_LIMITS[name][1])
+            if kind == 'wheel':
+                lo.append(-STS3215_SPEED), hi.append(STS3215_SPEED)
             else:
-                lo.append(0.0), hi.append(FINGER_OPEN)
+                lo.append(ARM_LIMITS[name][0]), hi.append(ARM_LIMITS[name][1])
         self.act_lo = torch.tensor(lo, device=device)
         self.act_hi = torch.tensor(hi, device=device)
         # (P,) position of each proprio joint inside the action vector, to normalize readings with the same ranges
@@ -97,11 +100,16 @@ class PickPlaceEnv:
         # (E,) control steps taken this episode, (E, B) block already delivered
         self.steps = torch.zeros(self.E, dtype=torch.long, device=device)
         self.placed = torch.zeros(self.E, num_blocks, dtype=torch.bool, device=device)
-        if scene_json is None:
-            self.reset(torch.ones(self.E, dtype=torch.bool, device=device))
-        else:
-            self.world.joints.prepare()
-            self.potential = self.compute_potential()
+        # randomize layouts on reset (training), or keep the given scene as is (the live editor)
+        self.randomize = scene_json is None
+        self.reset(torch.ones(self.E, dtype=torch.bool, device=device))
+
+    def enable_cuda_graph(self):
+        # physics step and every camera as CUDA graphs, then a fresh reset (capture warm-up stepped the world)
+        self.world.enable_cuda_graph()
+        for cam in self.cameras:
+            cam.enable_cuda_graph()
+        self.reset(torch.ones(self.E, dtype=torch.bool, device=self.device))
 
     def action_to_targets(self, action):
         # (E, A) in [-1, 1] -> (E, A) joint targets
@@ -117,6 +125,12 @@ class PickPlaceEnv:
         w.reset(mask)
         n = int(mask.sum())
         if n == 0:
+            return
+        if not self.randomize:
+            w.joints.prepare()
+            self.steps[mask] = 0
+            self.placed[mask] = False
+            self.potential = self.compute_potential()
             return
         envs = mask.nonzero().view(-1)
         # rotate the whole robot about y around the origin
@@ -157,7 +171,7 @@ class PickPlaceEnv:
         e = torch.arange(self.E, device=self.device)
         block = w.pos[e, self.blocks[cur]]
         zone = w.pos[e, self.zones[cur]]
-        grip = w.pos[:, self.fingers].mean(1)
+        grip = w.pos[:, self.jaws].mean(1)
         d_grip = torch.linalg.norm(grip - block, dim=-1)
         d_zone = torch.linalg.norm((block - zone)[:, [0, 2]], dim=-1)
         pot = -(GRIP_W * d_grip + PLACE_W * d_zone)
@@ -172,11 +186,13 @@ class PickPlaceEnv:
         return (d < ZONE_SIZE / 2).all(-1) & resting
 
     def observe(self):
-        # {"rgb": (E, 3, H, W) uint8, "proprio": (E, PROPRIO_DIM) float}
+        # {"rgb": (E, 3 * len(CAMERAS), H, W) uint8 (front, wrist), "proprio": (E, PROPRIO_DIM) float}
         w = self.world
         q = (w.joints.value[:, self.proprio_joints] - self.proprio_lo) / (self.proprio_hi - self.proprio_lo) * 2 - 1
-        wheels = w.joints.speeds()[:, self.wheel_joints] / WHEEL_MAX_SPEED
-        return {'rgb': self.camera.render().permute(0, 3, 1, 2), 'proprio': torch.cat([q, wheels], -1)}
+        wheels = w.joints.speeds()[:, self.wheel_joints] / STS3215_SPEED
+        # (E, 3 * len(CAMERAS), H, W)
+        rgb = torch.cat([cam.render().permute(0, 3, 1, 2) for cam in self.cameras], dim=1)
+        return {'rgb': rgb, 'proprio': torch.cat([q, wheels], -1)}
 
     def step(self, action):
         # action (E, A) in [-1, 1]. returns obs, reward (E,), done (E,), info {"success": (E,) bool}
@@ -191,8 +207,8 @@ class PickPlaceEnv:
         reward = pot - self.potential + SUCCESS_REWARD * newly.sum(-1)
         self.potential = pot
         success = self.placed.all(-1)
-        # chassis up axis tipped past 60°: flipped
-        up = quat_rotate(w.quat[:, self.chassis], torch.tensor([0.0, 1.0, 0.0], device=self.device).expand(self.E, 3))
+        # base up axis tipped past 60°: flipped
+        up = quat_rotate(w.quat[:, self.base], torch.tensor([0.0, 1.0, 0.0], device=self.device).expand(self.E, 3))
         flipped = up[:, 1] < 0.5
         done = success | flipped | (self.steps >= self.max_steps)
         info = {'success': success.clone()}

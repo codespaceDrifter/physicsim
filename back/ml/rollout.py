@@ -11,8 +11,7 @@ def evaluate(policy, num_envs, device, num_blocks=1, seed=123, record_name=None)
     # record_name: also save env 0's episode to logs/{record_name}/ for playback
     env = PickPlaceEnv(num_envs, device, num_blocks=num_blocks, seed=seed)
     if str(device).startswith('cuda'):
-        env.world.enable_cuda_graph()
-        env.reset(torch.ones(num_envs, dtype=torch.bool, device=device))
+        env.enable_cuda_graph()
     policy.eval()
     obs = env.observe()
     stack = FrameStack(obs['rgb'])
