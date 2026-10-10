@@ -21,7 +21,8 @@ SPECULATIVE_DISTANCE = 0.02
 MAX_PUSH_VELOCITY = 3.0
 # closing speed below which bounces are ignored (resting contacts don't jitter)
 RESTITUTION_THRESHOLD = 0.5
-# contact buffer capacity per env. if more slots touch, the shallowest ones are dropped
+# default contact buffer capacity per env (scene settings "max_contacts" overrides). if more slots touch, the
+# shallowest ones are dropped
 MAX_CONTACTS = 64
 # omni wheels (cylinder shape with "omni": true): friction across the wheel is only the small rolling friction of its
 # passive rollers, so the wheel grips along its rolling direction and slides freely along its axle
@@ -31,7 +32,7 @@ ROLLER_FRICTION = 0.02
 ANCHOR_RANGE = 0.005
 # {(type_a, type_b): contact slots per pair}
 SLOTS = {(PLANE, SPHERE): 1, (PLANE, BOX): 8, (PLANE, CYLINDER): 8, (SPHERE, SPHERE): 1, (SPHERE, BOX): 1,
-         (SPHERE, CYLINDER): 1, (BOX, BOX): 25, (BOX, CYLINDER): 24}
+         (SPHERE, CYLINDER): 1, (BOX, BOX): 25, (BOX, CYLINDER): 24, (CYLINDER, CYLINDER): 32}
 
 
 class Contacts:
@@ -71,16 +72,16 @@ class Contacts:
         for b in bodies:
             assert not b['shape'].get('omni', False) or b['shape']['type'] == 'cylinder', f"{b['id']}: only cylinders can be omni wheels"
         omni = torch.tensor([b['shape'].get('omni', False) for b in bodies], device=dev, dtype=torch.bool)
-        # (S,) slot touches an omni wheel. cylinders are always body B of a pair (highest shape code)
+        # (S,) slot touches an omni wheel as body B (cylinders are body B of every pair except cylinder-cylinder,
+        # where only B's rolling direction is used: fine for a wheel bumping another robot's base)
         self.slot_omni = omni[self.slot_b]
-        assert not omni[self.slot_a].any(), 'omni wheel ended up as body A of a pair'
         self.slot_restitution = torch.maximum(rest[self.slot_a], rest[self.slot_b])
         # any pair that can bounce at all
         self.bouncy = bool((self.slot_restitution > 0).any())
 
         E = world.E
         # contact buffer capacity
-        self.C = min(self.S, MAX_CONTACTS)
+        self.C = min(self.S, world.scene['settings'].get('max_contacts', MAX_CONTACTS))
         # (E, 1) env index, broadcasts against (E, C) body indices
         self.env = torch.arange(E, device=dev).unsqueeze(-1)
         # (E, C) slot held by each buffer entry, (E, C, 3) accumulated impulse [normal, t1, t2], (E, C) entry in use.
@@ -116,8 +117,10 @@ class Contacts:
                 out = collision.sphere_cylinder(pa, w.radius[a], pb, qb, w.radius[b], w.half_height[b])
             elif key == (BOX, BOX):
                 out = collision.box_box(pa, qa, w.half[a], pb, qb, w.half[b])
-            else:
+            elif key == (BOX, CYLINDER):
                 out = collision.box_cylinder(pa, qa, w.half[a], pb, qb, w.radius[b], w.half_height[b])
+            else:
+                out = collision.cylinder_cylinder(pa, qa, w.radius[a], w.half_height[a], pb, qb, w.radius[b], w.half_height[b])
             points.append(out[0].flatten(1, 2))
             normals.append(out[1].flatten(1, 2))
             depths.append(out[2].flatten(1, 2))

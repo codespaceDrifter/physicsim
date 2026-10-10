@@ -1,18 +1,20 @@
 # PPO fine-tuning of the pixel policy with the env's shaped reward, starting from the behavior cloning checkpoint.
 # clipped PPO (Schulman et al. 2017) with GAE, reward scaling by the running std of the discounted return,
-# gaussian exploration around the policy's mean action.
+# gaussian exploration around the policy's mean action. in the race this is self-play: the same policy drives both
+# robots, and each robot's experience is a separate agent in the batch (N = envs * robots).
 #
-# run from back/:  python -m ml.train_ppo --init checkpoints/bc.pt --iters 2000
-# writes checkpoints/ppo.pt  {"policy": state_dict, "iter": int, "success": float}
+# run from back/:  python -m ml.train_ppo --task race --init checkpoints/bc.pt --iters 2000
+# writes checkpoints/ppo.pt  {"policy": state_dict, "iter": int, "metrics": {...}} (best by success / score)
 import argparse
 import os
 import time
 import torch
-from robot.pick_place import PickPlaceEnv
 from ml.policy import Policy, FrameStack
 from ml.rollout import evaluate
+from ml.tasks import make_env, TASKS
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--task', default='race', choices=TASKS)
 parser.add_argument('--init', default='checkpoints/bc.pt', help='behavior cloning checkpoint, "" to start from scratch')
 parser.add_argument('--envs', type=int, default=256)
 parser.add_argument('--horizon', type=int, default=32, help='control steps per env per iteration')
@@ -32,7 +34,7 @@ parser.add_argument('--out', default='checkpoints/ppo.pt')
 args = parser.parse_args()
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-env = PickPlaceEnv(args.envs, device, num_blocks=1, seed=args.seed)
+env = make_env(args.task, args.envs, device, seed=args.seed)
 if device == 'cuda':
     env.enable_cuda_graph()
 policy = Policy().to(device)
@@ -45,24 +47,27 @@ opt = torch.optim.Adam(policy.parameters(), lr=args.lr, eps=1e-5)
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
 
 H, E = args.horizon, args.envs
+# agents = every robot in every env
+N = E * env.R
 obs = env.observe()
-stack = FrameStack(obs['rgb'])
-proprio = obs['proprio']
-# rollout buffers, (H, E, ...)
-buf_frames = torch.zeros(H, E, *stack.frames.shape[1:], dtype=torch.uint8, device=device)
-buf_proprio = torch.zeros(H, E, proprio.shape[1], device=device)
-buf_action = torch.zeros(H, E, policy.mean.out_features, device=device)
-buf_logp = torch.zeros(H, E, device=device)
-buf_value = torch.zeros(H, E, device=device)
-buf_reward = torch.zeros(H, E, device=device)
-buf_done = torch.zeros(H, E, device=device)
-# running discounted return per env and its running variance, for reward scaling
-ret = torch.zeros(E, device=device)
+stack = FrameStack(obs['rgb'].flatten(0, 1))
+proprio = obs['proprio'].flatten(0, 1)
+# rollout buffers, (H, N, ...)
+buf_frames = torch.zeros(H, N, *stack.frames.shape[1:], dtype=torch.uint8, device=device)
+buf_proprio = torch.zeros(H, N, proprio.shape[1], device=device)
+buf_action = torch.zeros(H, N, policy.mean.out_features, device=device)
+buf_logp = torch.zeros(H, N, device=device)
+buf_value = torch.zeros(H, N, device=device)
+buf_reward = torch.zeros(H, N, device=device)
+buf_done = torch.zeros(H, N, device=device)
+# running discounted return per agent and its running variance, for reward scaling
+ret = torch.zeros(N, device=device)
 ret_var, ret_count = 1.0, 1e-4
 best = -1.0
 start = time.time()
 for it in range(1, args.iters + 1):
-    finished, succeeded = 0, 0
+    # episodes finished this iteration, and their summed success (pick) / final score (race)
+    finished, total = 0, 0.0
     with torch.no_grad():
         for t in range(H):
             mean, value = policy(stack.frames, proprio)
@@ -70,23 +75,26 @@ for it in range(1, args.iters + 1):
             action = dist.sample()
             buf_frames[t], buf_proprio[t], buf_action[t] = stack.frames, proprio, action
             buf_logp[t], buf_value[t] = dist.log_prob(action).sum(-1), value
-            obs, reward, done, info = env.step(action)
-            proprio = obs['proprio']
-            stack.push(obs['rgb'], done)
+            obs, reward, done, info = env.step(action.view(E, env.R, -1))
+            # (N,) per agent
+            reward = reward.flatten()
+            agent_done = done.repeat_interleave(env.R)
+            proprio = obs['proprio'].flatten(0, 1)
+            stack.push(obs['rgb'].flatten(0, 1), agent_done)
             # reward scaling: divide by the running std of the discounted return (Engstrom et al. 2020)
-            ret = ret * args.gamma * (~done) + reward
-            batch_var, n = ret.var().item(), E
+            ret = ret * args.gamma * (~agent_done) + reward
+            batch_var, n = ret.var().item(), N
             total = ret_count + n
             ret_var = (ret_var * ret_count + batch_var * n) / total
             ret_count = total
             buf_reward[t] = reward / (ret_var ** 0.5 + 1e-8)
-            buf_done[t] = done.float()
+            buf_done[t] = agent_done.float()
             finished += int(done.sum())
-            succeeded += int(info['success'].sum())
+            total += float(info['success'][done].sum()) if args.task == 'pick' else float(info['score'][done].float().mean(-1).sum())
         _, next_value = policy(stack.frames, proprio)
         # generalized advantage estimation, episodes end (no bootstrap) where done
-        adv = torch.zeros(H, E, device=device)
-        gae = torch.zeros(E, device=device)
+        adv = torch.zeros(H, N, device=device)
+        gae = torch.zeros(N, device=device)
         for t in reversed(range(H)):
             nv = next_value if t == H - 1 else buf_value[t + 1]
             delta = buf_reward[t] + args.gamma * nv * (1 - buf_done[t]) - buf_value[t]
@@ -95,11 +103,11 @@ for it in range(1, args.iters + 1):
         returns = adv + buf_value
 
     # PPO update over the flattened (H*E) batch
-    flat = lambda x: x.reshape(H * E, *x.shape[2:])
+    flat = lambda x: x.reshape(H * N, *x.shape[2:])
     f_frames, f_proprio, f_action, f_logp, f_adv, f_ret = map(flat, (buf_frames, buf_proprio, buf_action, buf_logp, adv, returns))
     f_adv = (f_adv - f_adv.mean()) / (f_adv.std() + 1e-8)
     for _ in range(args.epochs):
-        for mb in torch.randperm(H * E, device=device).split(args.minibatch):
+        for mb in torch.randperm(H * N, device=device).split(args.minibatch):
             mean, value = policy(f_frames[mb], f_proprio[mb])
             dist = torch.distributions.Normal(mean, policy.log_std.exp())
             ratio = (dist.log_prob(f_action[mb]).sum(-1) - f_logp[mb]).exp()
@@ -110,12 +118,14 @@ for it in range(1, args.iters + 1):
             loss.backward()
             torch.nn.utils.clip_grad_norm_(policy.parameters(), 0.5)
             opt.step()
-    print(f'iter {it} episodes {finished} success {succeeded / max(finished, 1):.0%} policy {policy_loss.item():.3f} '
+    print(f'iter {it} episodes {finished} {"success" if args.task == "pick" else "mean score"} {total / max(finished, 1):.2f} policy {policy_loss.item():.3f} '
           f'value {value_loss.item():.3f} std {policy.log_std.exp().mean().item():.3f} ({time.time() - start:.0f}s)')
     if it % args.eval_every == 0 or it == args.iters:
-        success = evaluate(policy, args.eval_envs, device)
-        print(f'iter {it} eval success {success:.0%}')
-        if success >= best:
-            best = success
-            torch.save({'policy': policy.state_dict(), 'iter': it, 'success': success}, args.out)
+        metrics = evaluate(policy, args.task, args.eval_envs, device)
+        # pick: delivery rate; race: the policy's mean score against the scripted expert
+        key = metrics['success' if args.task == 'pick' else 'score']
+        print(f'iter {it} eval {metrics}')
+        if key >= best:
+            best = key
+            torch.save({'policy': policy.state_dict(), 'iter': it, 'metrics': metrics}, args.out)
             print(f'saved {args.out}')

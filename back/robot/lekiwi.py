@@ -112,18 +112,18 @@ def quat_y_to(d):
     return [v / qn for v in q]
 
 
-def lekiwi():
-    # {"bodies": [...], "joints": [...], "cameras": [...]} in the scene JSON format, ids prefixed with "lekiwi/"
-    P = PREFIX
+def lekiwi(prefix=PREFIX, group=GROUP, accent='#e8833a'):
+    # {"bodies": [...], "joints": [...], "cameras": [...]} in the scene JSON format, ids prefixed with `prefix`.
+    # several robots in one scene need different prefixes and collision groups (else they'd pass through each other)
+    P = prefix
     identity = [1.0, 0.0, 0.0, 0.0]
     white = '#f2efe6'
     dark = '#2b2b2b'
-    accent = '#e8833a'
 
     def part(name, shape, pos, mass, volume, color, rotation=identity, friction=0.8):
         return {'id': P + name, 'shape': shape, 'position': [float(v) for v in pos], 'rotation': rotation,
                 'velocity': [0.0, 0.0, 0.0], 'angular_velocity': [0.0, 0.0, 0.0], 'density': mass / volume,
-                'static': False, 'collide': True, 'group': GROUP, 'friction': friction, 'restitution': 0.0, 'color': color}
+                'static': False, 'collide': True, 'group': group, 'friction': friction, 'restitution': 0.0, 'color': color}
 
     def joint(name, kind, a, b, anchor, axis, limits=None, drive=None):
         return {'id': P + name, 'type': kind, 'body_a': P + a, 'body_b': P + b, 'anchor': [float(v) for v in anchor],

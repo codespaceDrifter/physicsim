@@ -14,15 +14,18 @@ back/                      python, run everything from here as modules:  cd back
     render.py              camera pixels by batched ray casting
   robot/
     lekiwi.py              the LeKiwi model (omni base + SO-101 arm, cameras)
-    pick_place.py          batched pick-and-place environment (reset, step, reward, pixels)
+    env.py                 base for batched LeKiwi tasks (robots, actions, pixels, proprio)
+    pick_place.py          pick-and-place: one robot, block i -> zone i
+    block_race.py          block race: two robots, six blocks, a home zone each
   ml/
+    tasks.py               "pick" / "race": which env, what counts as a good demo episode
     expert.py              scripted expert that reads true simulator state
     collect.py             expert demonstrations -> dataset
     policy.py              pixel policy network (CNN)
     train_bc.py            behavior cloning
     train_ppo.py           PPO fine-tuning
     rollout.py / eval.py   success rate + recording a policy episode
-  write_scenes.py          writes scenes/lekiwi_pick.json
+  write_scenes.py          writes scenes/lekiwi_pick.json and scenes/block_race.json
   recording.py             recording format (playback)
   live.py                  real-time simulation session for the editor
   api.py                   FastAPI server: scenes, prefabs, recordings, websocket
@@ -248,7 +251,24 @@ shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll, gripper (absolu
 
 ---
 
-## Part 5: The Pick-and-Place Environment
+## Part 5: The Tasks
+
+`robot/env.py` is the base: every tensor has a robot axis R (`obs["rgb"]` (E, R, 6, 64, 64), `obs["proprio"]`
+(E, R, 9), actions (E, R, 9), reward (E, R)). Each task also tells the scripted expert which block to fetch next and
+where to drop it (`expert_goal`).
+
+### Block race (the main task)
+
+`robot/block_race.py`. Two LeKiwis (orange `lekiwi/`, teal `lekiwi2/`) in a walled 2.4 × 1.6 m arena, six yellow
+blocks in the middle, a 40 cm home zone at each end. Score = blocks resting in your home zone; stealing from the
+other zone is allowed and the robots can bump each other. A round is 60 s (600 control steps).
+
+- **reset**: each robot in front of its zone (random sideways offset and heading), blocks scattered in the middle.
+- **reward** (E, 2): zero-sum `10 × (my score change − their score change)` + shaping
+  `Φ = -(|grip - block| + 2 |block - home|)` for the best block not home yet.
+- **info**: `score` (E, 2).
+
+### Pick-and-place
 
 `robot/pick_place.py`. `PickPlaceEnv(num_envs, device, num_blocks)`. Each env has LeKiwi, colored 3.5 cm blocks and
 matching colored target zones on the floor. The robot must carry block i into zone i.
@@ -270,16 +290,20 @@ matching colored target zones on the floor. The robot must carry block i into zo
 Pure RL from pixels almost never solves a long task like drive → grasp → carry → place (the reward is too sparse).
 Real robot learning starts from demonstrations, so this does too.
 
+All scripts take `--task race` (default) or `--task pick`.
+
 **1. Scripted expert** (`ml/expert.py`). It cheats: it reads true positions from the simulator. A state machine per
-env: approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat.
+(env, robot): approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat. In the race it
+goes for the nearest block that isn't home and isn't in the other robot's gripper (so it steals too).
 - driving: holonomic, straight at the stopping point while turning to face the goal, kiwi inverse kinematics to wheel
   speeds.
 - arm: top-down 5-joint inverse kinematics (gripper straight down, pan toward the block, wrist roll aligns the jaws
   with the block's faces). The grasp pose is locked once the jaws close, so it doesn't chase a nudged block.
 - targets are rate-limited like a real servo. 90 % of test episodes succeed.
 
-**2. Collect** (`python -m ml.collect --envs 128 --episodes 500`) keeps only successful episodes and writes
-`back/data/bc/`, one row per control step:
+**2. Collect** (`python -m ml.collect --task race --envs 128 --episodes 200`) keeps only good episodes (race: the
+robot scored, pick: the block was delivered), both robots of a race each from their own cameras, and writes
+`back/data/bc/`, one row per robot per control step (200 race episodes ≈ 120k rows ≈ 3 GB):
 
 ```
 frames.npy   (T, 64, 64, 6) uint8     front RGB, then wrist RGB
@@ -293,10 +317,12 @@ meta.json    {"frames": T, "episodes": n, "attempts": m}   only the first T rows
 Nature-DQN conv encoder → 512 → 256 → 9 actions (tanh), plus a value head for PPO.
 
 **4. Behavior cloning** (`python -m ml.train_bc`): MSE to the expert's actions with random-shift augmentation (DrQ).
-Every 5000 steps it measures the real success rate in 64 envs and keeps the best as `back/checkpoints/bc.pt`
-(`{"policy": state_dict, "step": int, "success": float}`).
+Every 5000 steps it evaluates in 64 envs and keeps the best as `back/checkpoints/bc.pt`
+(`{"policy": state_dict, "step": int, "metrics": {...}}`). Race metrics: the policy drives orange against the
+scripted expert on teal: `win` rate, its mean `score`, the `expert_score`. Pick: `success` rate.
 
-**5. PPO** (`python -m ml.train_ppo --init checkpoints/bc.pt`): 256 envs, 32-step rollouts, GAE, clipped objective,
+**5. PPO** (`python -m ml.train_ppo --task race --init checkpoints/bc.pt`): self-play in the race (the same policy
+drives both robots; each robot is an agent in the batch), 256 envs, 32-step rollouts, GAE, clipped objective,
 gaussian exploration around the BC actions, reward scaled by the running std of returns. Saves `checkpoints/ppo.pt`.
 
 **6. Evaluate** (`python -m ml.eval --ckpt checkpoints/ppo.pt`) prints the success rate and records one episode to
@@ -347,7 +373,9 @@ server -> client   {"type": "frame", "time", "poses": [[px,py,pz,qw,qx,qy,qz], .
 ```
 
 `live.py` holds the session: one world (physics + cameras as CUDA graphs on GPU) stepped in real time. The autopilot
-runs the expert, or the trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's cameras, at 10 Hz.
+runs the expert, or the trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's cameras, at 10 Hz. In the
+block race you drive orange and the autopilot drives teal; "expert (both)" / "policy (both)" drive both (AI vs AI).
+Race frames also carry `"info": {"score": [orange, teal]}`.
 
 **The editor** (`front/`) is CAD-style: scene tree left, properties right, toolbar on top.
 
@@ -369,8 +397,8 @@ pip install -r back/requirements.txt
 python main.py                       # backend (:8080) + editor (http://localhost:5173)
 
 # learning (run in tmux, from back/)
-python -m ml.collect --envs 128 --episodes 500
-python -m ml.train_bc --steps 30000
-python -m ml.train_ppo --init checkpoints/bc.pt --iters 2000
-python -m ml.eval --ckpt checkpoints/ppo.pt
+python -m ml.collect --task race --envs 128 --episodes 200
+python -m ml.train_bc --task race --steps 30000
+python -m ml.train_ppo --task race --init checkpoints/bc.pt --iters 2000
+python -m ml.eval --task race --ckpt checkpoints/ppo.pt
 ```

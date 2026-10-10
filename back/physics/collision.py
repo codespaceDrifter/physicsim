@@ -165,6 +165,27 @@ def box_cylinder(pA, qA, hA, pB, qB, rB, hhB):
     return torch.cat([p_rim, p_corner], 2), torch.cat([n_rim, n_corner], 2), torch.cat([-sd, -sd2], 2)
 
 
+def cylinder_cylinder(pA, qA, rA, hhA, pB, qB, rB, hhB):
+    # approximate like box_cylinder: 16 points around the middle of each cylinder's side tested against the other solid
+    # (covers two robot bases bumping side to side, and wheels touching)
+    E, P = pA.shape[:2]
+    # (16, 3) ring of 16 directions around the axis
+    ring = const([[math.cos(i * math.pi / 8), 0.0, math.sin(i * math.pi / 8)] for i in range(16)], pA.device)
+    points, normals, depths = [], [], []  # [(E, P, 16, 3)], [(E, P, 16, 3)], [(E, P, 16)]
+    for (p1, q1, r1, h1), (p2, q2, r2, h2), sign in (((pA, qA, rA, hhA), (pB, qB, rB, hhB), -1.0), ((pB, qB, rB, hhB), (pA, qA, rA, hhA), 1.0)):
+        # (P, 16, 3) points around the middle of cylinder 1's side (at the caps' edges a side-by-side overlap of thin
+        # cylinders reads as touching a cap), then world
+        rim_local = ring * r1[:, None, None]
+        rim = p1.unsqueeze(2) + quat_rotate(q1.unsqueeze(2), rim_local.expand(E, P, 16, 3))
+        c = quat_rotate_inv(q2.unsqueeze(2), rim - p2.unsqueeze(2))
+        surf, n_out, sd = cylinder_closest(c, r2[:, None].expand_as(c[..., 0]), h2[:, None].expand_as(c[..., 0]))
+        # A's rim inside B: A moves out along B's outward normal, so A -> B is minus it. B's rim inside A: plus A's.
+        normals.append(sign * quat_rotate(q2.unsqueeze(2), n_out))
+        points.append((p2.unsqueeze(2) + quat_rotate(q2.unsqueeze(2), surf) + rim) / 2)
+        depths.append(-sd)
+    return torch.cat(points, 2), torch.cat(normals, 2), torch.cat(depths, 2)
+
+
 def box_box(pA, qA, hA, pB, qB, hB):
     # separating axis test over 15 axes (3 face A, 3 face B, 9 edge×edge), then:
     #   face axis: contact polygon = intersection of the reference face rectangle and the incident face

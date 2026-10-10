@@ -12,6 +12,9 @@ const autopilotSelect = document.getElementById('autopilot');
 const gripperEl = document.getElementById('gripper-state');
 const jointReadout = document.getElementById('joint-readout');
 const feedsEl = document.getElementById('feeds');
+const scoreRow = document.getElementById('score-row');
+const scoreEl = document.getElementById('score');
+const FEED_SCALE = 3; // camera feed canvas zoom (64 px -> 192 px)
 
 const P = 'lekiwi/'; // only the first LeKiwi (namespace lekiwi/) is teleoperated
 const DRIVE_SPEED = 0.2; // m/s base speed while W/S (forward/back) or A/D (strafe) held
@@ -36,6 +39,7 @@ const ARM_KEYS = {
 
 const held = new Set(); // {key} teleop keys currently held, lowercase
 let hasRobot = false; // shown scene contains lekiwi/ joints
+let isRace = false; // block race scene (a second robot lekiwi2/): the autopilot drives the other robot, you keep yours
 let targets = {}; // {jointId: number} current teleop drive targets
 let lastSent = {}; // {jointId: number} targets the server already has
 let gripperOpen = false;
@@ -64,6 +68,7 @@ on('simPlay', () => {
 
 on('mode', () => {
   hasRobot = app.mode === 'simulate' && app.scene.joints.some(j => j.id.startsWith(P));
+  isRace = app.scene.joints.some(j => j.id.startsWith('lekiwi2/'));
   robotSection.style.display = hasRobot ? '' : 'none';
   held.clear();
   if (app.mode !== 'simulate') {
@@ -76,13 +81,21 @@ on('simStatus', () => {
   stateEl.textContent = sim.state;
   autopilotSelect.value = sim.autopilot;
   // while the autopilot drives, our last sent targets go stale -> resend everything once it's off
-  if (sim.autopilot !== 'off') lastSent = {};
+  if (autopilotDrivesYou()) lastSent = {};
 });
 
 autopilotSelect.onchange = () => send({ type: 'autopilot', mode: autopilotSelect.value });
 
+// the autopilot has taken over your robot (lekiwi/): any mode outside the race, only the "_both" modes in it
+function autopilotDrivesYou() {
+  return sim.autopilot !== 'off' && (!isRace || sim.autopilot.endsWith('_both'));
+}
+
 on('simFrame', (msg) => {
   timeEl.textContent = `${msg.time.toFixed(3)} s`;
+  // block race: blocks in each robot's home zone (you = orange lekiwi/, AI = teal lekiwi2/)
+  scoreRow.style.display = msg.info ? '' : 'none';
+  if (msg.info) scoreEl.textContent = `orange ${msg.info.score[0]} : ${msg.info.score[1]} teal`;
   statusTimeEl.textContent = `t = ${msg.time.toFixed(3)} s`;
 
   for (const [id, value] of Object.entries(msg.joints)) {
@@ -108,8 +121,8 @@ on('simFrame', (msg) => {
       const canvas = panel.lastChild;
       canvas.width = cam.width;
       canvas.height = cam.height;
-      canvas.style.width = `${cam.width * 4}px`;
-      canvas.style.height = `${cam.height * 4}px`;
+      canvas.style.width = `${cam.width * FEED_SCALE}px`;
+      canvas.style.height = `${cam.height * FEED_SCALE}px`;
       feedsEl.append(panel);
       const ctx = canvas.getContext('2d');
       feeds.set(cam.id, { canvas, ctx, image: ctx.createImageData(cam.width, cam.height) });
@@ -150,7 +163,7 @@ window.addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => held.clear());
 
 onTick((dt) => {
-  if (!hasRobot || sim.state !== 'running' || sim.autopilot !== 'off') return;
+  if (!hasRobot || sim.state !== 'running' || autopilotDrivesYou()) return;
 
   // held -> fixed value, released -> 0
   // base velocity: forward vx, right vz, yaw rate wy (+ = left), then kiwi inverse kinematics per wheel:

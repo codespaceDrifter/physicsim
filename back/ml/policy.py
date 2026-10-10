@@ -1,7 +1,7 @@
 # ToFuBot policy: camera frames + joint readings -> actions. shared by behavior cloning, PPO and the live server.
 import torch
 import torch.nn as nn
-from robot.pick_place import PROPRIO_DIM, ACTION_DIM, CAMERAS
+from robot.env import PROPRIO_DIM, ACTION_DIM, CAMERAS
 
 # consecutive camera frames stacked on the channel axis (gives the policy motion / short memory)
 FRAME_STACK = 3

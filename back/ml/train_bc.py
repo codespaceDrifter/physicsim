@@ -1,8 +1,8 @@
 # Behavior cloning: train the pixel policy to imitate the scripted expert's actions (data from ml.collect).
 # the whole dataset is moved to the GPU as uint8 (200k frames ≈ 2.5 GB) so batches are sampled without copies.
 #
-# run from back/:  python -m ml.train_bc --steps 30000
-# writes checkpoints/bc.pt  {"policy": state_dict, "step": int, "success": float}
+# run from back/:  python -m ml.train_bc --task race --steps 30000
+# writes checkpoints/bc.pt  {"policy": state_dict, "step": int, "metrics": {...}} (best by success / score)
 import argparse
 import json
 import os
@@ -11,8 +11,10 @@ import numpy as np
 import torch
 from ml.policy import Policy, random_shift, FRAME_STACK
 from ml.rollout import evaluate
+from ml.tasks import TASKS
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--task', default='race', choices=TASKS)
 parser.add_argument('--data', default='data/bc')
 parser.add_argument('--steps', type=int, default=30_000)
 parser.add_argument('--batch', type=int, default=256)
@@ -55,9 +57,11 @@ for step in range(1, args.steps + 1):
     if step % 500 == 0:
         print(f'step {step} loss {loss.item():.4f} ({time.time() - start:.0f}s)')
     if step % args.eval_every == 0 or step == args.steps:
-        success = evaluate(policy, args.eval_envs, device)
-        print(f'step {step} eval success {success:.0%}')
-        if success >= best:
-            best = success
-            torch.save({'policy': policy.state_dict(), 'step': step, 'success': success}, args.out)
+        metrics = evaluate(policy, args.task, args.eval_envs, device)
+        # pick: delivery rate; race: the policy's mean score against the scripted expert
+        key = metrics['success' if args.task == 'pick' else 'score']
+        print(f'step {step} eval {metrics}')
+        if key >= best:
+            best = key
+            torch.save({'policy': policy.state_dict(), 'step': step, 'metrics': metrics}, args.out)
             print(f'saved {args.out}')
