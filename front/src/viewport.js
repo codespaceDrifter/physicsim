@@ -47,6 +47,62 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.12;
 controls.target.set(0, 0.1, 0);
 controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+// OrbitControls only rotates. its zoom and pan scale with the distance to the orbit target (slow near it), so zoom and
+// pan are done below at a constant speed instead
+controls.enableZoom = false;
+controls.enablePan = false;
+
+// ---------- constant-speed zoom (wheel) and pan (ctrl + left drag, or right drag) ----------
+let navScale = 1; // m, size of the shown scene: sets zoom / pan speed, constant within a scene
+const ZOOM_STEP = 0.06; // fraction of navScale moved per wheel notch (deltaY 100)
+const PAN_PER_PIXEL = 0.0012; // fraction of navScale moved per pixel dragged
+const MIN_PIVOT_DISTANCE = 0.02; // fraction of navScale: zooming closer than this pushes the pivot forward
+
+export function setNavigationScale(size) {
+  navScale = size;
+}
+
+renderer.domElement.addEventListener('wheel', (e) => {
+  if (!controls.enabled) return;
+  e.preventDefault();
+  // > 0 = zoom in. wheel notches are deltaY ±100, trackpads send small deltas: both move proportionally
+  const step = -e.deltaY / 100 * ZOOM_STEP * navScale;
+  if (camera === orthoCamera) {
+    // orthographic: shrink / grow the visible half height by the same constant amount
+    const half = orthoCamera.top / orthoCamera.zoom;
+    orthoCamera.zoom = orthoCamera.top / Math.max(half - step, MIN_PIVOT_DISTANCE * navScale);
+    orthoCamera.updateProjectionMatrix();
+    return;
+  }
+  const dir = controls.target.clone().sub(camera.position).normalize();
+  camera.position.addScaledVector(dir, step);
+  // passed (or nearly reached) the pivot: carry it forward so zooming in never stops
+  const minDist = MIN_PIVOT_DISTANCE * navScale;
+  if (controls.target.clone().sub(camera.position).dot(dir) < minDist) {
+    controls.target.copy(camera.position).addScaledVector(dir, minDist);
+  }
+}, { passive: false });
+
+let panning = null; // {x, y} last pointer position while panning, null otherwise
+renderer.domElement.addEventListener('pointerdown', (e) => {
+  if (!controls.enabled || !(e.button === 2 || (e.button === 0 && (e.ctrlKey || e.metaKey)))) return;
+  panning = { x: e.clientX, y: e.clientY };
+});
+window.addEventListener('pointermove', (e) => {
+  if (panning === null) return;
+  const dx = e.clientX - panning.x;
+  const dy = e.clientY - panning.y;
+  panning = { x: e.clientX, y: e.clientY };
+  // move camera and pivot together in the screen plane: the scene follows the cursor at constant speed
+  const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+  const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+  const offset = right.multiplyScalar(-dx).addScaledVector(up, dy).multiplyScalar(PAN_PER_PIXEL * navScale);
+  camera.position.add(offset);
+  controls.target.add(offset);
+});
+window.addEventListener('pointerup', () => {
+  panning = null;
+});
 
 // clickable axes indicator in the bottom-right corner, rebuilt when the camera changes
 export let viewHelper = null;

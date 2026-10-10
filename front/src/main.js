@@ -1,5 +1,7 @@
 // Entry point: wires the modules together through the event bus and loads the first scene.
+import * as THREE from 'three';
 import { app, on, emit } from './state.js';
+import { setNavigationScale } from './viewport.js';
 import { getJson } from './api.js';
 import { newScene } from './model.js';
 import { toast } from './toast.js';
@@ -28,6 +30,10 @@ function updateStatus() {
 
 on('scene', (source) => {
   rebuild(app.shown);
+  // zoom / pan speed follows the scene's size: spread of the non-plane bodies (a 1 m robot scene vs 700 m of stars)
+  const points = app.shown.bodies.filter(b => b.shape.type !== 'plane').map(b => new THREE.Vector3(...b.position)); // [Vector3]
+  const size = points.length > 0 ? new THREE.Box3().setFromPoints(points).getSize(new THREE.Vector3()).length() : 1;
+  setNavigationScale(Math.max(size, 0.5));
   attachGizmo();
   renderOutliner();
   // the inspector already shows what it just wrote; re-rendering would steal input focus
