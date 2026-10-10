@@ -21,9 +21,9 @@ const GRIPPER_OPEN = 0.035; // m finger target when open (closed = 0)
 const SEND_INTERVAL = 0.05; // s between drive messages (20 Hz)
 // key -> [joint name, direction] for incremental arm controls
 const ARM_KEYS = {
-  j: ['turret', 1], l: ['turret', -1],
-  i: ['shoulder', 1], k: ['shoulder', -1],
-  u: ['elbow', 1], o: ['elbow', -1],
+  y: ['turret', 1], u: ['turret', -1],
+  h: ['shoulder', 1], j: ['shoulder', -1],
+  n: ['elbow', 1], m: ['elbow', -1],
 }; // {key: [joint name, +1 | -1]}
 
 const held = new Set(); // {key} teleop keys currently held, lowercase

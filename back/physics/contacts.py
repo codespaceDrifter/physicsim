@@ -23,6 +23,9 @@ MAX_PUSH_VELOCITY = 3.0
 RESTITUTION_THRESHOLD = 0.5
 # contact buffer capacity per env. if more slots touch, the shallowest ones are dropped
 MAX_CONTACTS = 64
+# sticky friction anchors are dropped once they're this far from the current contact point (m): a rolling wheel's
+# anchor rotates away from the contact (rolling isn't slipping), a held block's anchors stay put
+ANCHOR_RANGE = 0.005
 # {(type_a, type_b): contact slots per pair}
 SLOTS = {(PLANE, SPHERE): 1, (PLANE, BOX): 8, (PLANE, CYLINDER): 8, (SPHERE, SPHERE): 1, (SPHERE, BOX): 1,
          (SPHERE, CYLINDER): 1, (BOX, BOX): 25, (BOX, CYLINDER): 24}
@@ -74,6 +77,12 @@ class Contacts:
         self.slot = torch.zeros(E, self.C, dtype=torch.long, device=dev)
         self.lam = torch.zeros(E, self.C, 3, device=dev)
         self.valid = torch.zeros(E, self.C, dtype=torch.bool, device=dev)
+        # sticky friction (Catto's Solver2D "sticky", like PhysX friction anchors): (E, C, 3) where the contact first
+        # touched, in A's and B's body frames, kept while the slot persists. friction also pulls these two points back
+        # together, so a held block can't slowly creep out. (E, C) sliding: friction hit the Coulomb limit -> re-anchor
+        self.anchor_a = torch.zeros(E, self.C, 3, device=dev)
+        self.anchor_b = torch.zeros(E, self.C, 3, device=dev)
+        self.sliding = torch.zeros(E, self.C, dtype=torch.bool, device=dev)
 
     def detect(self):
         if self.C == 0:
@@ -107,10 +116,16 @@ class Contacts:
         # fill the contact buffer with the deepest slots. (E, C)
         depth, slot = depth.topk(self.C, dim=1)
         valid = depth > -float('inf')
-        # warm start: hand last step's impulses to the same slot (same slot = same geometric feature), via a full slot table
-        table = torch.zeros(w.E, self.S, 3, device=w.device)
-        table.scatter_(1, self.slot.unsqueeze(-1).expand(-1, -1, 3), torch.where(self.valid.unsqueeze(-1), self.lam, 0.0))
-        self.lam = torch.where(valid.unsqueeze(-1), table.gather(1, slot.unsqueeze(-1).expand(-1, -1, 3)), 0.0)
+        # hand last step's per-slot state to the same slot (same slot = same geometric feature), via a full slot table:
+        # [impulse (3), anchor_a (3), anchor_b (3), sliding, was touching]
+        state = torch.cat([self.lam, self.anchor_a, self.anchor_b, self.sliding.unsqueeze(-1).float(), torch.ones_like(self.lam[..., :1])], dim=-1)
+        table = torch.zeros(w.E, self.S, 11, device=w.device)
+        table.scatter_(1, self.slot.unsqueeze(-1).expand(-1, -1, 11), torch.where(self.valid.unsqueeze(-1), state, 0.0))
+        prev = table.gather(1, slot.unsqueeze(-1).expand(-1, -1, 11))
+        # touching this step and last step: warm start, keep the anchors unless it was sliding
+        keep = valid & (prev[..., 10] > 0.5)
+        self.lam = torch.where(keep.unsqueeze(-1), prev[..., :3], 0.0)
+        stick = (keep & (prev[..., 9] < 0.5)).unsqueeze(-1)
         self.slot = slot
         self.valid = valid
         # (E, C) bodies, friction, restitution of each buffer entry
@@ -132,6 +147,11 @@ class Contacts:
         # (E, C, 3) the same anchors in body frames, only used to measure separation as bodies move
         self.local_ra = quat_rotate_inv(quat_a, self.ra)
         self.local_rb = quat_rotate_inv(quat_b, self.rb)
+        near = ((torch.linalg.norm(quat_rotate(quat_a, prev[..., 3:6]) - self.ra, dim=-1) < ANCHOR_RANGE)
+                & (torch.linalg.norm(quat_rotate(quat_b, prev[..., 6:9]) - self.rb, dim=-1) < ANCHOR_RANGE)).unsqueeze(-1)
+        self.anchor_a = torch.where(stick & near, prev[..., 3:6], self.local_ra)
+        self.anchor_b = torch.where(stick & near, prev[..., 6:9], self.local_rb)
+        self.sliding = torch.zeros_like(valid)
         # (E, C, 3, 3) contact basis rows: normal, then friction directions t1, t2 orthogonal to it
         n = self.normal
         ref = torch.where((n[..., :1].abs() < 0.9), const([1., 0., 0.], n.device), const([0., 1., 0.], n.device))
@@ -167,9 +187,14 @@ class Contacts:
             return
         w = self.world
         # current separation from how far the two anchor points (moving with their bodies) drifted since detection
-        pa = w.pos[self.env, self.idx_a] + quat_rotate(w.quat[self.env, self.idx_a], self.local_ra)
-        pb = w.pos[self.env, self.idx_b] + quat_rotate(w.quat[self.env, self.idx_b], self.local_rb)
+        pos_a, quat_a = w.pos[self.env, self.idx_a], w.quat[self.env, self.idx_a]
+        pos_b, quat_b = w.pos[self.env, self.idx_b], w.quat[self.env, self.idx_b]
+        pa = pos_a + quat_rotate(quat_a, self.local_ra)
+        pb = pos_b + quat_rotate(quat_b, self.local_rb)
         self.s = ((pb - pa) * self.normal).sum(-1) + self.s0
+        # (E, C, 2) tangential drift between the sticky anchors along t1, t2
+        drift = (pos_b + quat_rotate(quat_b, self.anchor_b)) - (pos_a + quat_rotate(quat_a, self.anchor_a))
+        self.drift = (self.basis[..., 1:, :] * drift.unsqueeze(-2)).sum(-1)
 
     def row_velocity(self):
         # (E, C, 3) relative velocity of the contact points along n, t1, t2
@@ -211,11 +236,18 @@ class Contacts:
         new_n = torch.clamp_min(old_n - ms * (rv[..., 0] + bias) * self.mass[..., 0] - imp_s * old_n, 0.0)
         new_n = torch.where(self.valid, new_n, 0.0)
         # Coulomb friction from the same velocity snapshot, bounded by the disk |λt| <= μ λn
+        # with bias, static friction also removes the drift since the contact started (soft, like the normal row)
         old_t = self.lam[..., 1:]
-        new_t = old_t - rv[..., 1:] * self.mass[..., 1:]
+        if use_bias:
+            bias_t = (bias_rate * self.drift).clamp(-MAX_PUSH_VELOCITY, MAX_PUSH_VELOCITY)
+            new_t = old_t - mass_scale * (rv[..., 1:] + bias_t) * self.mass[..., 1:] - impulse_scale * old_t
+        else:
+            new_t = old_t - rv[..., 1:] * self.mass[..., 1:]
         limit = (self.friction * new_n).unsqueeze(-1)
         t_len = torch.linalg.norm(new_t, dim=-1, keepdim=True)
-        new_t = torch.where(t_len > limit, new_t * limit / t_len.clamp_min(1e-12), new_t)
+        over = t_len > limit
+        self.sliding = over.squeeze(-1) & self.valid
+        new_t = torch.where(over, new_t * limit / t_len.clamp_min(1e-12), new_t)
         new_t = torch.where(self.valid.unsqueeze(-1), new_t, 0.0)
         new = torch.cat([new_n.unsqueeze(-1), new_t], dim=-1)
         self.apply(new - self.lam)
@@ -235,3 +267,4 @@ class Contacts:
     def reset(self, env_mask):
         self.lam.masked_fill_(env_mask.view(-1, 1, 1), 0.0)
         self.valid.masked_fill_(env_mask.view(-1, 1), False)
+        self.sliding.masked_fill_(env_mask.view(-1, 1), False)

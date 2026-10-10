@@ -184,7 +184,7 @@ class World:
         # [(object, attribute)] state carried between steps or read by callers
         self.graph_slots = [(self, n) for n in ('pos', 'quat', 'velocity', 'inv_inertia_world')] + \
                            [(self.joints, n) for n in ('lam', 'lam_lower', 'lam_upper', 'lam_drive', 'value')] + \
-                           [(self.contacts, n) for n in ('slot', 'lam', 'valid')]
+                           [(self.contacts, n) for n in ('slot', 'lam', 'valid', 'anchor_a', 'anchor_b', 'sliding')]
         self.graph = None
         # warm up on a side stream (required before capture), then capture
         stream = torch.cuda.Stream()

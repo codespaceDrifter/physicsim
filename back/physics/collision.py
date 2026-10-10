@@ -203,8 +203,11 @@ def box_box(pA, qA, hA, pB, qB, hB):
     sepA_max, iA = sepA.max(-1)
     sepB_max, iB = sepB.max(-1)
     sepE_max, iE = sepE.max(-1)
-    # prefer face axes (stable manifolds): pick B only if clearly better than A, edge only if clearly better than faces
-    ref_is_B = sepB_max > sepA_max + 1e-5
+    # prefer face axes (stable manifolds): pick B only if clearly better than A, edge only if clearly better than faces.
+    # with parallel faces (a gripper finger flat on a block) both face axes are nearly tied; a tight tolerance makes the
+    # reference box flip every step, renaming the contact slots and wiping the warm-started friction (Box2D's
+    # b2CollidePolygons uses the same relative + absolute tolerance)
+    ref_is_B = sepB_max > 0.95 * sepA_max + 0.0005
     face_sep = torch.maximum(sepA_max, sepB_max)
     use_edge = sepE_max * 1.05 - 1e-4 > face_sep
 

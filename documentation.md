@@ -201,6 +201,11 @@ few touch at once, so each step the 64 deepest touching slots per env are copied
 those are solved. Shapes never change, which makes CUDA graphs possible. A slot always means the same feature
 ("corner 3 of this box"), so last step's impulse is handed back to it (warm starting).
 
+**Sticky friction** (Catto's Solver2D "sticky", like PhysX friction anchors). Velocity-level friction alone lets a
+held block creep slowly out of a gripper. Each contact therefore remembers where it first touched on both bodies,
+and friction also pulls those two points back together. When friction hits the Coulomb limit (real sliding), or
+an anchor drifts more than 5 mm from the contact point (a rolling wheel), the anchor resets.
+
 **Restitution** runs after the substeps. Contacts that were closing faster than 0.5 m/s get pushed to
 `-e × (closing speed)`.
 
@@ -284,8 +289,8 @@ reward is too sparse. Real robot learning starts with demonstrations, so this do
 per env: approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat. It drives with
 pure pursuit and true Ackermann steering: each front wheel gets its own angle and each rear wheel its own speed, so
 every wheel rolls around the same turn center. It backs up in a 3-point turn when the target is inside the turning
-circle. It reaches with 2-link inverse kinematics and rate-limits its targets like a real servo. About 80 % of
-episodes succeed.
+circle. It reaches with 2-link inverse kinematics and rate-limits its targets like a real servo. It succeeded in 48 of
+48 test episodes.
 
 **2. Collect** (`python -m ml.collect --envs 128 --episodes 500`) keeps only successful expert episodes and
 writes `back/data/bc/`, one row per control step:
@@ -370,7 +375,7 @@ trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's camera, at 
   quaternion), see volume and mass. Standard views (Top / Front / Right / Iso), perspective / ortho. Save to
   `back/scenes/`.
 - **Simulate**: Play sends the edited scene to the server. Drive ToFuBot with the keyboard (W/S drive, A/D steer,
-  J/L turret, I/K shoulder, U/O elbow, Space gripper), or switch the autopilot to expert / policy. The robot's
+  Y/U turret, H/J shoulder, N/M elbow, Space gripper), or switch the autopilot to expert / policy. The robot's
   camera feed and joint values are shown live. Stop returns to the unmodified scene.
 - **Playback**: pick a recording, play / pause / speed / scrub.
 
