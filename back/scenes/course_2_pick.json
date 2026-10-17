@@ -1,5 +1,5 @@
 {
- "name": "block_race",
+ "name": "course_2_pick",
  "settings": {
   "dt": 0.016666666666666666,
   "substeps": 4,
@@ -9,7 +9,8 @@
    0.0
   ],
   "G": 0.0,
-  "max_contacts": 128
+  "max_contacts": 128,
+  "stage": "pick"
  },
  "bodies": [
   {
@@ -362,7 +363,7 @@
    "position": [
     -0.6862999999999999,
     0.195,
-    -0.0
+    0.0
    ],
    "rotation": [
     1.0,
@@ -701,6 +702,84 @@
    "color": "#f5c49a"
   },
   {
+   "id": "goal/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    0.0,
+    -0.5,
+    0.3
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    -0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f5c49a"
+  },
+  {
+   "id": "goal/0/front",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.003,
+     0.03
+    ]
+   },
+   "position": [
+    4.286263797015737e-18,
+    -0.499,
+    0.37
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    -0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
    "id": "lekiwi2/base",
    "shape": {
     "type": "cylinder",
@@ -710,7 +789,7 @@
    "position": [
     0.7,
     0.135,
-    -0.0
+    0.0
    ],
    "rotation": [
     -0.0,
@@ -899,7 +978,7 @@
    "position": [
     0.6304,
     0.25270000000000004,
-    -0.0
+    0.0
    ],
    "rotation": [
     -0.0,
@@ -1055,7 +1134,7 @@
    "position": [
     0.5258708661445546,
     0.2447565222741765,
-    -0.0
+    0.0
    ],
    "rotation": [
     -0.0,
@@ -1094,7 +1173,7 @@
    "position": [
     0.5077448023491858,
     0.2505302395590999,
-    -0.0
+    0.0
    ],
    "rotation": [
     -0.0,
@@ -1133,7 +1212,7 @@
    "position": [
     0.7799999999999999,
     0.18,
-    -0.0
+    0.0
    ],
    "rotation": [
     -0.0,
@@ -1199,6 +1278,84 @@
    "color": "#9adfd8"
   },
   {
+   "id": "goal/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    0.0,
+    -0.5,
+    -0.3
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#9adfd8"
+  },
+  {
+   "id": "goal/1/front",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.003,
+     0.03
+    ]
+   },
+   "position": [
+    4.286263797015737e-18,
+    -0.499,
+    -0.37
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2bb5a8"
+  },
+  {
    "id": "block/0",
    "shape": {
     "type": "box",
@@ -1235,7 +1392,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   },
   {
    "id": "block/1",
@@ -1274,7 +1431,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   },
   {
    "id": "block/2",
@@ -1313,7 +1470,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   },
   {
    "id": "block/3",
@@ -1352,7 +1509,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   },
   {
    "id": "block/4",
@@ -1391,7 +1548,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   },
   {
    "id": "block/5",
@@ -1430,7 +1587,7 @@
    "group": 0,
    "friction": 0.8,
    "restitution": 0.0,
-   "color": "#e8c53a"
+   "color": "#ef6fb0"
   }
  ],
  "joints": [
@@ -1514,7 +1671,7 @@
    "anchor": [
     -0.7,
     0.165,
-    -0.0
+    0.0
    ],
    "axis": [
     1.0,
@@ -1550,7 +1707,7 @@
    "anchor": [
     -0.6612,
     0.2274,
-    -0.0
+    0.0
    ],
    "axis": [
     0.0,
@@ -1814,7 +1971,7 @@
    "anchor": [
     0.7799999999999999,
     0.165,
-    -0.0
+    0.0
    ],
    "axis": [
     -1.0,
@@ -2015,8 +2172,8 @@
     -0.09229595564125725
    ],
    "fov": 90,
-   "width": 64,
-   "height": 64
+   "width": 96,
+   "height": 96
   },
   {
    "id": "lekiwi/wrist_cam",
@@ -2033,8 +2190,8 @@
     -0.053057054501380825
    ],
    "fov": 90,
-   "width": 64,
-   "height": 64
+   "width": 96,
+   "height": 96
   },
   {
    "id": "lekiwi2/front_cam",
@@ -2051,8 +2208,8 @@
     -0.09229595564125725
    ],
    "fov": 90,
-   "width": 64,
-   "height": 64
+   "width": 96,
+   "height": 96
   },
   {
    "id": "lekiwi2/wrist_cam",
@@ -2069,8 +2226,8 @@
     -0.053057054501380825
    ],
    "fov": 90,
-   "width": 64,
-   "height": 64
+   "width": 96,
+   "height": 96
   }
  ]
 }

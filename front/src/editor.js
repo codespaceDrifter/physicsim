@@ -70,7 +70,8 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 
 canvas.addEventListener('pointerup', (e) => {
-  if (e.button !== 0 || downOnGizmo || Math.hypot(e.clientX - downX, e.clientY - downY) > 4) return;
+  // the simple view only watches: nothing to select
+  if (app.view === 'simple' || e.button !== 0 || downOnGizmo || Math.hypot(e.clientX - downX, e.clientY - downY) > 4) return;
   if (viewHelper.handleClick(e)) return;
   const rect = canvas.getBoundingClientRect();
   const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
@@ -187,7 +188,7 @@ window.addEventListener('keydown', (e) => {
   if (e.target.closest('input, select, textarea')) return;
   const key = e.key.toLowerCase();
   if (key === 'f') frameSelection();
-  if (app.mode !== 'edit') return;
+  if (app.mode !== 'edit' || app.view === 'simple') return;
   if (key === 'delete' || key === 'backspace') deleteSelection();
   else if (key === 'd' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault();

@@ -6,25 +6,31 @@
   <title>physicsim</title>
   <link rel="stylesheet" href="/src/style.css">
 </head>
-<body data-mode="edit">
+<body data-mode="edit" data-view="simple">
   <div id="app">
     <header id="toolbar">
       <div class="brand">physicsim</div>
 
-      <div class="group only-edit">
+      <div class="group only-simple">
+        <button id="demo-play" class="on" title="These games were recorded earlier on a GPU. This web server has no GPU, so it only plays them back.">
+          ❚❚ Playing pre-recorded games · this web server has no GPU
+        </button>
+      </div>
+
+      <div class="group only-edit adv">
         <select id="scene-select" title="Scene"></select>
         <button id="btn-new" title="New scene">New</button>
         <button id="btn-save" title="Save scene">Save</button>
       </div>
 
-      <div class="group only-edit">
+      <div class="group only-edit adv">
         <button id="btn-box" title="Add box">Box</button>
         <button id="btn-sphere" title="Add sphere">Sphere</button>
         <button id="btn-cylinder" title="Add cylinder">Cylinder</button>
         <button id="btn-lekiwi" title="Insert LeKiwi robot">LeKiwi</button>
       </div>
 
-      <div class="group only-edit">
+      <div class="group only-edit adv">
         <select id="joint-type" title="Joint type">
           <option value="revolute">Revolute</option>
           <option value="prismatic">Prismatic</option>
@@ -33,12 +39,12 @@
         <button id="btn-joint" title="Create joint between two selected bodies (shift-click)">Joint</button>
       </div>
 
-      <div class="group only-edit">
+      <div class="group only-edit adv">
         <button id="btn-duplicate" title="Duplicate (Ctrl+D)">Duplicate</button>
         <button id="btn-delete" title="Delete (Del)">Delete</button>
       </div>
 
-      <div class="group only-edit">
+      <div class="group only-edit adv">
         <div class="seg">
           <button id="btn-translate" class="on" title="Translate (T)">Move</button>
           <button id="btn-rotate" title="Rotate (R)">Rotate</button>
@@ -46,14 +52,14 @@
         <button id="btn-snap" title="Snap 0.01 m / 15°">Snap</button>
       </div>
 
-      <div class="group only-simulate">
+      <div class="group only-simulate adv">
         <button id="btn-play" class="primary">▶ Play</button>
         <button id="btn-pause">Pause</button>
         <button id="btn-step">Step</button>
         <button id="btn-stop">■ Stop</button>
       </div>
 
-      <div class="group only-playback">
+      <div class="group only-playback adv">
         <select id="rec-select" title="Recording"></select>
         <button id="pb-play" class="primary">▶ Play</button>
         <select id="pb-speed" title="Playback speed">
@@ -67,20 +73,25 @@
 
       <div class="spacer"></div>
 
-      <div class="seg modes">
+      <div class="seg views">
+        <button data-view="simple" class="on">Simple</button>
+        <button data-view="advanced">Advanced</button>
+      </div>
+
+      <div class="seg modes adv">
         <button data-mode="edit" class="on">Edit</button>
         <button data-mode="simulate">Simulate</button>
         <button data-mode="playback">Playback</button>
       </div>
     </header>
 
-    <aside id="outliner">
+    <aside id="outliner" class="adv">
       <div class="panel-title">Scene tree</div>
       <div id="outliner-tree"></div>
     </aside>
 
     <main id="viewport">
-      <div id="viewtools">
+      <div id="viewtools" class="adv">
         <button data-view="top">Top</button>
         <button data-view="front">Front</button>
         <button data-view="right">Right</button>
@@ -90,13 +101,26 @@
         <button id="btn-fit" title="Frame selection (F)">Fit</button>
       </div>
       <div id="feeds" class="only-simulate"></div>
+      <div id="demo-board" class="only-simple">
+        <div class="teams">
+          <span class="team orange">orange<small>student · sees only its cameras</small></span>
+          <span id="demo-score" class="score">0 : 0</span>
+          <span class="team teal">teal<small>teacher · sees exact positions</small></span>
+        </div>
+        <div id="demo-clock"></div>
+      </div>
+      <div id="demo-feeds" class="only-simple"></div>
+      <div id="demo-info" class="only-simple">
+        1 v 1 race: each robot carries blocks into its own home zone (the square in its color); after 60 s the one with
+        more blocks home wins. Stealing allowed. Both robots are AI models: no human, no script.
+      </div>
       <div id="timeline" class="only-playback">
         <input type="range" id="pb-slider" min="0" max="0" value="0" step="1">
         <span id="pb-time">0.000 s</span>
       </div>
     </main>
 
-    <aside id="right">
+    <aside id="right" class="adv">
       <div id="simpanel" class="only-simulate">
         <div class="panel-title">Simulation</div>
         <div class="section">
@@ -105,15 +129,22 @@
         </div>
         <div id="robot-section" class="section">
           <div class="section-title">LeKiwi</div>
-          <div class="row" id="score-row" style="display: none"><label>Score</label><span id="score" class="readout"></span></div>
+          <div id="course-rows" style="display: none">
+            <div class="row"><label>Stage</label><span id="course-stage" class="readout"></span></div>
+            <div class="row"><label>Command</label><span id="course-command" class="readout"></span></div>
+            <div class="row"><label>Score</label><span id="score" class="readout"></span></div>
+            <div class="row"><label>Done</label><span id="course-done" class="readout"></span></div>
+          </div>
           <div class="row">
             <label>Autopilot</label>
             <select id="autopilot">
               <option value="off">off</option>
               <option value="expert">expert</option>
-              <option value="policy">policy</option>
+              <option value="teacher">teacher</option>
+              <option value="student">student (VLA)</option>
               <option value="expert_both">expert (both robots)</option>
-              <option value="policy_both">policy (both robots)</option>
+              <option value="teacher_both">teacher (both robots)</option>
+              <option value="student_both">student (both robots)</option>
             </select>
           </div>
           <div class="keys">
@@ -136,7 +167,7 @@
       <div id="inspector"></div>
     </aside>
 
-    <footer id="statusbar">
+    <footer id="statusbar" class="adv">
       <span id="status-mode"></span>
       <span id="status-sel"></span>
       <span class="spacer"></span>

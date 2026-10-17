@@ -236,8 +236,8 @@ class World:
             for _ in range(self.contact_iterations):
                 self.contacts.solve(use_bias=True)
             self.integrate_positions(self.h)
-            # positions moved: refresh geometry for the relax pass and the next substep
-            self.joints.prepare()
+            # positions moved: refresh the joint errors for the relax pass and the next substep
+            self.joints.prepare(errors_only=True)
             self.contacts.update_separation()
             for _ in range(self.joint_iterations):
                 self.joints.solve(use_bias=False)

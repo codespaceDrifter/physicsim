@@ -12,9 +12,13 @@ const autopilotSelect = document.getElementById('autopilot');
 const gripperEl = document.getElementById('gripper-state');
 const jointReadout = document.getElementById('joint-readout');
 const feedsEl = document.getElementById('feeds');
-const scoreRow = document.getElementById('score-row');
+const courseRows = document.getElementById('course-rows');
+const courseStageEl = document.getElementById('course-stage');
+const courseCommandEl = document.getElementById('course-command');
 const scoreEl = document.getElementById('score');
-const FEED_SCALE = 3; // camera feed canvas zoom (64 px -> 192 px)
+const courseDoneEl = document.getElementById('course-done');
+// camera feed titles: robot prefix -> its color name
+const ROBOT_NAMES = { 'lekiwi/': 'orange robot', 'lekiwi2/': 'teal robot' }; // {prefix: name}
 
 const P = 'lekiwi/'; // only the first LeKiwi (namespace lekiwi/) is teleoperated
 const DRIVE_SPEED = 0.2; // m/s base speed while W/S (forward/back) or A/D (strafe) held
@@ -39,7 +43,7 @@ const ARM_KEYS = {
 
 const held = new Set(); // {key} teleop keys currently held, lowercase
 let hasRobot = false; // shown scene contains lekiwi/ joints
-let isRace = false; // block race scene (a second robot lekiwi2/): the autopilot drives the other robot, you keep yours
+let hasOpponent = false; // course scene with an active second robot (lekiwi2/, all stages but the speedrun): the autopilot drives it, you keep yours
 let targets = {}; // {jointId: number} current teleop drive targets
 let lastSent = {}; // {jointId: number} targets the server already has
 let gripperOpen = false;
@@ -68,7 +72,7 @@ on('simPlay', () => {
 
 on('mode', () => {
   hasRobot = app.mode === 'simulate' && app.scene.joints.some(j => j.id.startsWith(P));
-  isRace = app.scene.joints.some(j => j.id.startsWith('lekiwi2/'));
+  hasOpponent = app.scene.joints.some(j => j.id.startsWith('lekiwi2/')) && app.scene.settings.stage !== undefined && app.scene.settings.stage !== 'speedrun';
   robotSection.style.display = hasRobot ? '' : 'none';
   held.clear();
   if (app.mode !== 'simulate') {
@@ -86,16 +90,23 @@ on('simStatus', () => {
 
 autopilotSelect.onchange = () => send({ type: 'autopilot', mode: autopilotSelect.value });
 
-// the autopilot has taken over your robot (lekiwi/): any mode outside the race, only the "_both" modes in it
+// the autopilot has taken over your robot (lekiwi/): any mode without an opponent, only the "_both" modes with one
 function autopilotDrivesYou() {
-  return sim.autopilot !== 'off' && (!isRace || sim.autopilot.endsWith('_both'));
+  return sim.autopilot !== 'off' && (!hasOpponent || sim.autopilot.endsWith('_both'));
 }
 
 on('simFrame', (msg) => {
   timeEl.textContent = `${msg.time.toFixed(3)} s`;
-  // block race: blocks in each robot's home zone (you = orange lekiwi/, AI = teal lekiwi2/)
-  scoreRow.style.display = msg.info ? '' : 'none';
-  if (msg.info) scoreEl.textContent = `orange ${msg.info.score[0]} : ${msg.info.score[1]} teal`;
+  // course scene: stage, your command, blocks in each home zone, whose stage goal holds now (you = orange lekiwi/, AI = teal lekiwi2/)
+  courseRows.style.display = msg.info ? '' : 'none';
+  if (msg.info) {
+    courseStageEl.textContent = msg.info.stage;
+    courseCommandEl.textContent = msg.info.commands[0];
+    courseCommandEl.title = msg.info.commands[0];
+    scoreEl.textContent = `orange ${msg.info.score[0]} : ${msg.info.score[1]} teal`;
+    const mark = (ok) => (ok ? '✓' : '–');
+    courseDoneEl.textContent = `orange ${mark(msg.info.success[0])}  teal ${mark(msg.info.success[1])}`;
+  }
   statusTimeEl.textContent = `t = ${msg.time.toFixed(3)} s`;
 
   for (const [id, value] of Object.entries(msg.joints)) {
@@ -117,12 +128,13 @@ on('simFrame', (msg) => {
       const panel = document.createElement('div');
       panel.className = 'feed';
       panel.innerHTML = '<div class="feed-title"></div><canvas></canvas>';
-      panel.firstChild.textContent = cam.id;
+      // "lekiwi2/wrist_cam" -> "teal robot · wrist cam" (canvas size on screen: style.css)
+      const slash = cam.id.lastIndexOf('/') + 1;
+      const robot = ROBOT_NAMES[cam.id.slice(0, slash)];
+      panel.firstChild.textContent = robot ? `${robot} · ${cam.id.slice(slash).replace('_', ' ')}` : cam.id;
       const canvas = panel.lastChild;
       canvas.width = cam.width;
       canvas.height = cam.height;
-      canvas.style.width = `${cam.width * FEED_SCALE}px`;
-      canvas.style.height = `${cam.height * FEED_SCALE}px`;
       feedsEl.append(panel);
       const ctx = canvas.getContext('2d');
       feeds.set(cam.id, { canvas, ctx, image: ctx.createImageData(cam.width, cam.height) });

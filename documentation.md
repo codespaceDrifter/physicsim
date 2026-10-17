@@ -15,25 +15,27 @@ back/                      python, run everything from here as modules:  cd back
   robot/
     lekiwi.py              the LeKiwi model (omni base + SO-101 arm, cameras)
     env.py                 base for batched LeKiwi tasks (robots, actions, pixels, proprio)
-    pick_place.py          pick-and-place: one robot, block i -> zone i
-    block_race.py          block race: two robots, six blocks, a home zone each
-  ml/
-    tasks.py               "pick" / "race": which env, what counts as a good demo episode
-    expert.py              scripted expert that reads true simulator state
-    collect.py             expert demonstrations -> dataset
-    policy.py              pixel policy network (CNN)
-    train_bc.py            behavior cloning
-    train_ppo.py           PPO fine-tuning
-    rollout.py / eval.py   success rate + recording a policy episode
-  write_scenes.py          writes scenes/lekiwi_pick.json and scenes/block_race.json
+    course.py              the course: one arena, five stages (drive, pick, bring, race, speedrun)
+  ml/                      the learning pipeline (plan and reasoning: ../DOC.md)
+    expert.py              scripted expert that reads true simulator state (baseline, editor autopilot)
+    teacher.py             teacher: MLP actor + critic on privileged state
+    bc_teacher.py          bootstrap the teacher: clone the scripted expert (+ a driving teacher), expert DAgger
+    train_teacher.py       PPO on the whole course (stage mixing, self-play), from scratch or from the clone
+    vla.py                 VLA v1: small transformer, cameras + command words + proprio -> action chunks
+    rollout.py             drivers (teacher / VLA / expert) and per-stage evaluation
+    distill.py             teacher -> VLA: behavior cloning, then DAgger rounds
+    train_grpo.py          GRPO fine-tune of the VLA on episode outcomes
+    eval.py                the results table: every model on every stage
+  write_scenes.py          writes scenes/course_{n}_{stage}.json, one per course stage (course_1_drive ...)
   recording.py             recording format (playback)
+  record_games.py          pre-recorded student vs teacher races for the web demo (logs/game_{i}/)
   live.py                  real-time simulation session for the editor
   api.py                   FastAPI server: scenes, prefabs, recordings, websocket
   scenes/                  scene JSON files the editor opens / saves
 front/                     Three.js + Vite editor (edit / simulate / playback)
 main.py                    starts back (api) + front (vite) together
 logs/{name}/               recordings
-back/data/bc/              behavior cloning dataset (gitignored)
+back/data/distill/         distillation dataset (gitignored)
 back/checkpoints/          trained policies (gitignored)
 ```
 
@@ -49,8 +51,8 @@ recordings. One format everywhere.
 
 ```json
 {
-  "name": "lekiwi_pick",
-  "settings": {"dt": 0.0167, "substeps": 4, "gravity": [0, -9.81, 0], "G": 0.0},
+  "name": "course_4_race",
+  "settings": {"dt": 0.0167, "substeps": 4, "gravity": [0, -9.81, 0], "G": 0.0, "max_contacts": 128, "stage": "race"},
   "bodies": [ ... ],
   "joints": [ ... ],
   "cameras": [ ... ]
@@ -254,79 +256,156 @@ shoulder_pan, shoulder_lift, elbow_flex, wrist_flex, wrist_roll, gripper (absolu
 ## Part 5: The Tasks
 
 `robot/env.py` is the base: every tensor has a robot axis R (`obs["rgb"]` (E, R, 6, 64, 64), `obs["proprio"]`
-(E, R, 9), actions (E, R, 9), reward (E, R)). Each task also tells the scripted expert which block to fetch next and
-where to drop it (`expert_goal`).
+(E, R, 9), actions (E, R, 9), reward (E, R)).
 
-### Block race (the main task)
+- **observation**: `rgb`: front camera RGB then wrist camera RGB, rendered by ray casting. `proprio`: the 6 arm joint
+  angles and 3 wheel speeds, normalized.
+- **step(action)**: sets joint targets, runs 6 physics steps (control at 10 Hz), returns `reward, done, info`.
+  Envs that finish are reset automatically. Nothing is rendered: call `observe()` (pixels) or `state()` after the
+  step when you need them (the teacher never renders).
 
-`robot/block_race.py`. Two LeKiwis (orange `lekiwi/`, teal `lekiwi2/`) in a walled 2.4 × 1.6 m arena, six yellow
-blocks in the middle, a 40 cm home zone at each end. Score = blocks resting in your home zone; stealing from the
-other zone is allowed and the robots can bump each other. A round is 60 s (600 control steps).
+### The course
 
-- **reset**: each robot in front of its zone (random sideways offset and heading), blocks scattered in the middle.
-- **reward** (E, 2): zero-sum `10 × (my score change − their score change)` + shaping
-  `Φ = -(|grip - block| + 2 |block - home|)` for the best block not home yet.
-- **info**: `score` (E, 2).
+`robot/course.py`, `CourseEnv(num_envs, device, stage_probs)`. One arena for everything: walled 2.4 × 1.6 m, two
+LeKiwis (orange `lekiwi/`, teal `lekiwi2/`), six pink 3.5 cm blocks, a 40 cm home zone at each end, and a goal
+marker per robot (`goal/r`: a pad, plus `goal/r/front`, a dot on the edge the robot must face). Every env samples a
+stage at reset from `stage_probs` (5 numbers, STAGES order), so all stages run in one batched world (both robots
+exist in every stage; unused markers sit under the floor):
 
-### Pick-and-place
+| stage | each robot must | episode | reward |
+|---|---|---|---|
+| drive | put its base on its goal pad (5 cm, 10°) | 15 s | Φ = -(distance + 0.2 × heading error), +10 on success |
+| pick | lift a block 5 cm, held between the jaws | 30 s | Φ = -(grip → nearest block + 2 × missing lift), +10 |
+| bring | get a block resting in its home zone | 45 s | Φ = -(grip → block + 2 × block → home), +10 |
+| race | have more blocks home than the other robot after 60 s (stealing allowed) | 60 s | 10 × (my score change - theirs) + Φ as in bring |
+| speedrun | robot 0 alone (robot 1 parked south of the arena): all 6 blocks home | 120 s | 10 × score change - 0.02 per step + Φ |
 
-`robot/pick_place.py`. `PickPlaceEnv(num_envs, device, num_blocks)`. Each env has LeKiwi, colored 3.5 cm blocks and
-matching colored target zones on the floor. The robot must carry block i into zone i.
+**Speedrun subcourses** (reverse curriculum): a speedrun episode can start with k = 0 … 5 blocks already resting in
+robot 0's home zone (`env.home_probs` (6,): probability of each k; `info["start_home"]`: an episode's k). The end of a
+speedrun can then be practiced before the whole of it.
 
-- **reset**: random robot heading, blocks and zones 0.45-0.95 m away and at least 0.25 m apart, random block yaw.
-- **step(action)**: sets joint targets, runs 6 physics steps (control at 10 Hz), returns `obs, reward, done, info`.
-  Envs that finish are reset automatically.
-- **observation**: `rgb` (E, 6, 64, 64) uint8: front camera RGB then wrist camera RGB, rendered by ray casting.
-  `proprio` (E, 9): the 6 arm joint angles and 3 wheel speeds, normalized.
-- **reward**: potential-based shaping, `r = Φ(s') - Φ(s) + 10 per delivered block`, with
-  `Φ = -(|gripper - block| + 2 |block - zone|)`. For PPO; behavior cloning ignores it.
-- **success**: every block resting inside its zone. Episodes end on success, a flipped base, or after 300 control
-  steps per block.
+Rewards are per robot, `r = Φ(s') - Φ(s) + bonus` (potential-based shaping, for PPO). An episode ends when every
+active robot succeeded (not in the race), a base flips past 60°, or time runs out. `info`: `success` (E, R) (race:
+won), `score` (E, R) blocks home, `stage` (E,).
+
+- **reset**: drive: robots anywhere in the arena, random headings; each goal is an offset from the robot's start on
+  the grid the command can say exactly (forward / right in 0.1 m steps up to 1 m, a turn in 15° steps), resampled
+  until it lies in the arena 30 cm clear of blocks, robots and the other goal.
+  Other stages: each robot in front of its zone (random sideways offset and heading), blocks scattered in the middle
+  with random yaw.
+- **command(e, r)**: the stage as text, e.g. "move 0.5 m forward and 0.3 m right, then turn 90° right" (drive, from
+  the goal relative to the start pose) or "win the race".
+- **state()** (E, R, 62): privileged state for the teacher, in the robot's own frame (forward, right): proprio (9),
+  base velocity (3), grip point (3), per block position + sin/cos of 4 × relative yaw (30, cubes repeat every 90°;
+  blocks sorted nearest first), own and other home (4), other robot position + relative heading (4), stage one-hot
+  (5), drive goal (3), time left in the episode 1 → 0 (1).
+- **copy_envs(src, dst)**: right after a reset, make envs `dst` exact copies of `src` (GRPO's groups).
+- **block_yaw()** (E, B): each block's yaw mod 90°, read off whichever body axis lies most horizontal, so a block that
+  tumbled onto a side face reads right too (the quaternion's yaw alone assumes it is upright).
 
 ---
 
 ## Part 6: Learning (`back/ml/`)
 
-Pure RL from pixels almost never solves a long task like drive → grasp → carry → place (the reward is too sparse).
-Real robot learning starts from demonstrations, so this does too.
-
-All scripts take `--task race` (default) or `--task pick`.
-
-**1. Scripted expert** (`ml/expert.py`). It cheats: it reads true positions from the simulator. A state machine per
-(env, robot): approach → pre-grasp → lower → close → lift → stow → carry → place → release → retreat. In the race it
-goes for the nearest block that isn't home and isn't in the other robot's gripper (so it steals too).
-- driving: holonomic, straight at the stopping point while turning to face the goal, kiwi inverse kinematics to wheel
-  speeds.
-- arm: top-down 5-joint inverse kinematics (gripper straight down, pan toward the block, wrist roll aligns the jaws
-  with the block's faces). The grasp pose is locked once the jaws close, so it doesn't chase a nudged block.
-- targets are rate-limited like a real servo. 90 % of test episodes succeed.
-
-**2. Collect** (`python -m ml.collect --task race --envs 128 --episodes 200`) keeps only good episodes (race: the
-robot scored, pick: the block was delivered), both robots of a race each from their own cameras, and writes
-`back/data/bc/`, one row per robot per control step (200 race episodes ≈ 120k rows ≈ 3 GB):
+The plan and the reasoning behind it are in `DOC.md`; the PPO explanation in MINDOLOGY `writing/training/PPO.md`.
+Four steps, each starting from the previous one's model:
 
 ```
-frames.npy   (T, 64, 64, 6) uint8     front RGB, then wrist RGB
-proprio.npy  (T, 9) float32           joint readings
-actions.npy  (T, 9) float32           what the expert did, in [-1, 1]
-episode.npy  (T,) int32               episode id (frame stacks never cross episodes)
-meta.json    {"frames": T, "episodes": n, "attempts": m}   only the first T rows are valid
+0. python -m ml.train_teacher --hours 1       PPO from scratch: learns to drive -> a driving teacher (drive rows)
+1. python -m ml.bc_teacher --drive-teacher <driving teacher> --dagger-rounds 3 --dagger-steps 1200 \
+       --dagger-probs 0,1,1,1,3 --out checkpoints/teacher_bc.pt    clone the expert, 3 speedrun-weighted DAgger rounds
+                                              (keep the best round's checkpoint as checkpoints/teacher.pt)
+   python -m ml.train_teacher --init checkpoints/teacher.pt ...      optional PPO fine-tune of the clone
+2. python -m ml.distill                       cloning + DAgger        -> checkpoints/vla_sft.pt
+3. python -m ml.train_grpo                    GRPO on outcomes        -> checkpoints/vla_grpo.pt
+4. python -m ml.eval --vla checkpoints/vla_sft.pt checkpoints/vla_grpo.pt   -> the results table
 ```
 
-**3. Policy** (`ml/policy.py`). Input: the last 3 frames of both cameras stacked (18 channels) + the 9 joint readings.
-Nature-DQN conv encoder → 512 → 256 → 9 actions (tanh), plus a value head for PPO.
+**Scripted expert** (`ml/expert.py`), a baseline row, the teacher's source of demonstrations and DAgger labels, and
+an editor autopilot. It cheats: it reads true positions from the simulator. It is memoryless: every step it reads what
+to do from the state alone, no phase, timer or last command (with hidden state, DAgger labels followed the expert's
+own script instead of the clone's state and every round made the clone worse):
+- holding a block (a block's center above 4.2 cm, within 6 cm of the grip point): stow (arm to the carry pose) →
+  carry (drive in front of the first free home slot, facing the wall, within 6 cm / 0.25 rad) → place (tool tip over
+  the slot, down to 4 cm) → release (once the tip is below 5.5 cm and within 4 cm of the slot).
+- empty jaws: raise (a tool tip below 7 cm goes up first) → turn (within 0.6 m of its home, facing more than 100° away
+  from the arena and the next block behind it: spin left in place, so a camera-only student sees the blocks left
+  instead of guessing which way to turn) → approach (drive to the stopping point of the nearest block
+  that isn't home and isn't in the other robot's jaws, so it steals too) → pre (tip above the block) → lower → close
+  (once the tip is down) → lift (once the jaw has shut onto the block); a jaw shut on nothing opens again.
+Home slots: 6 per zone (2 rows × 3, back row first); the base stops in front of the zone and the arm reaches in, so it
+never drives over delivered blocks (driving in kept shoving them into the corners, where the arm couldn't grab them).
+Driving: holonomic, kiwi inverse kinematics, each other block within 25 cm pushes the base away (the base rides 10 cm
+off the floor; a block it drives at slides under it). Carrying turns at most 0.8 rad/s (faster spins flung blocks out
+of the jaws). Arm: top-down inverse kinematics; it aims at a point at most (0.15 rad, 3 cm, 3 cm) past where its tool
+tip is now (pure pursuit), so the tip moves in straight lines (joint-space moves swept blocks under the base) and the
+label is a clear function of the state. Checks accept 1–2 cm (a clone's error; 5 mm checks left clones waiting
+forever). A slot out of the arm's reach (25 cm) is driven to, not reached for; blocks resting in or just outside its
+zone don't push the carrying base off its stand. It only fetches blocks, so it idles in the drive stage. Pick / bring:
+100 %, speedrun: 99 % in ~560 of 1200 steps.
 
-**4. Behavior cloning** (`python -m ml.train_bc`): MSE to the expert's actions with random-shift augmentation (DrQ).
-Every 5000 steps it evaluates in 64 envs and keeps the best as `back/checkpoints/bc.pt`
-(`{"policy": state_dict, "step": int, "metrics": {...}}`). Race metrics: the policy drives orange against the
-scripted expert on teal: `win` rate, its mean `score`, the `expert_score`. Pick: `success` rate.
+**0. Bootstrapping the teacher** (`ml/bc_teacher.py`). PPO from scratch learns the drive stage (~90 % in 25M steps)
+but random exploration almost never finds a grasp. So the teacher is the expert's clone: (state, expert action) pairs
+on the block stages (512 envs × 2400 steps), plus a driving teacher's actions on drive-stage states, behavior-cloned
+into the actor (MSE, 80k steps). `--dagger-rounds`: then the clone drives, the expert labels the states it reaches,
+and a fresh clone trains on everything (fine-tuning the last clone briefly instead left it fitting even its old data
+twice as badly); `--dagger-probs` / `--dagger-steps` weight the stages and make rounds as long as a speedrun episode,
+so late-episode states get labeled too; `--model` starts the rounds from an existing clone. Lessons: adding the
+previous action to the state made cloning worse (copycat problem); round-to-round results vary (speedrun 88 %, 69 %,
+81 % over three rounds), so keep the best round.
 
-**5. PPO** (`python -m ml.train_ppo --task race --init checkpoints/bc.pt`): self-play in the race (the same policy
-drives both robots; each robot is an agent in the batch), 256 envs, 32-step rollouts, GAE, clipped objective,
-gaussian exploration around the BC actions, reward scaled by the running std of returns. Saves `checkpoints/ppo.pt`.
+**1. Teacher** (`ml/teacher.py`, `ml/train_teacher.py`). The blocks are a set, not slots: each block is a token
+(its 5 state numbers, "in my home zone" / "in the other home zone" flags, its offset from the gripper), encoded with
+the rest of the state (context, 128 wide), pooled by attention (query = context, 4 heads) and by max over blocks;
+[context, attention pool, max pool] → 3 × 512 (ELU) → 9 means + 9 learned log stds (gaussian). The means are residual:
+the action holding the current pose (proprio, normalized like the actions, `robot.env.HOLD`) + the network's output
+(as absolute targets its ~0.03 errors meant 1–2 cm at the gripper and the arm stalled). The context does not see the
+time left (the expert ignores it and finished early, so its clone fell apart on a late clock). A separate critic
+of the same shape → 1. Inputs normalized by a running mean / std, pooled over the block slots so block order doesn't
+matter. (A plain MLP over the 6 blocks sorted by distance had to work out which slot was still worth fetching; with
+blocks already home it mostly didn't: its clone made 0.77 blocks per speedrun, the set encoder's clone 1.0.) PPO: 4096 envs × 2 robots, 32-step rollouts, GAE (γ 0.99, λ 0.95, timeouts are treated as true ends; time
+left is in the state, though the networks ignore it), 5 epochs × 4 minibatches, clip 0.2, value 0.5, entropy 0.001, gradient norm 1, reward scaled by
+the running std of the discounted return, learning rate adapted to keep the KL near 0.01 (as in legged_gym). The
+speedrun's parked robot is left out of the update. Stage mixing: each stage's success rate is an EMA over iterations;
+its sampling weight is max(1 − success, 0.1); pick unlocks when drive reaches 80 %, bring after pick, race and
+speedrun after bring. Saves `{"model", "opt", "iter", "success", "unlocked", "args"}` every 25 iterations (`--resume`
+continues), logs one JSON line per iteration to `logs/teacher.jsonl` (success, mean episode return and sampling
+probability per stage, losses, KL, lr, std), stops after `--hours`. With `--init` (the clone): every stage unlocked,
+the input normalizer frozen at the clone's statistics, a critic-only warmup (15 iterations), action std 0.01, a
+separate actor learning rate starting tiny (a 0.01 std makes the KL very sensitive: one full-size step wrecked the
+clone) and the BC loss on the demos kept at weight 0.998^iteration (DAPG). `--home-curriculum`: reverse curriculum over the speedrun
+subcourses: only k = 5 (one block left) at first; k's weight is max(1 − its success, 0.1), and k − 1 unlocks when k
+succeeds 50 % of the time, down to the full run; the speedrun's own stage weight then follows the full run's success.
+This took the full speedrun from 1.0 to ~3 blocks per run in 3 h (it starts from the set-encoder clone).
 
-**6. Evaluate** (`python -m ml.eval --ckpt checkpoints/ppo.pt`) prints the success rate and records one episode to
-`logs/policy_rollout/` to watch in Playback mode.
+**2. VLA v1** (`ml/vla.py`), ~11M parameters, trained from scratch. One sequence per robot: 64 front camera patches
++ 64 wrist camera patches (8 × 8 pixels, one linear projection per camera), ≤ 16 command words (word vocabulary of
+the command templates, numbers are words), 1 proprio token, 5 action queries; learned position embeddings; 6
+pre-norm layers, width 384, 6 heads. Each query → 9 means, residual on the current pose like the teacher's: a chunk
+of 5 actions (0.5 s), executed, then the
+model plans again. A learned log std (GRPO only) makes it a gaussian policy.
+
+**Distillation** (`ml/distill.py`). Round 0: the teacher drives (its mean action + 0.1 noise), 800k rows. Rounds 1-5
+(DAgger): the VLA drives, 200k rows each. Every row is labeled with the teacher's mean action in that state; in the
+race robot 1 is always the teacher. After each round the VLA trains on all rows so far (L1 on the next 5 teacher
+actions, masked past the episode end; AdamW 3e-4, warmup + cosine, bf16) and is evaluated on every stage. One
+collection env persists across rounds, so long episodes are covered past their start. Dataset (`data/distill/`,
+preallocated memmaps, one row per active robot per control step): `rgb.npy` (N, 6, 64, 64) uint8, `words.npy`
+(N, 16) int16, `proprio.npy` (N, 9), `action.npy` (N, 9) the label, `next.npy` (N,) row of the same robot's next
+step (−1 at the episode end; rows of different robots interleave), `meta.json` `{"rows"}`.
+
+**3. GRPO** (`ml/train_grpo.py`). One stage per iteration (round robin), 512 envs in groups of 8 that start from the
+same copied state. The VLA samples chunks around its means (std 0.1 at the start, learned); each robot's first
+episode gets one reward: drive / pick / bring success (1 / 0), race 1 / 0.5 / 0 for win / tie / loss against the
+teacher, speedrun blocks home / 6 + the time left if all 6 are home. Advantage = (reward − group mean) / group std
+for every decision of the episode; groups with no spread are dropped (DAPO). Loss: clipped PPO objective per
+decision + 0.01 × KL to the frozen distilled VLA (exact, between gaussians). AdamW 1e-6, 2 epochs, stopped early once
+the k3 KL estimate between the sampling policy and the current one passes 0.05 (as in SB3). Action std starts at 0.01
+(grasping breaks under more noise), which makes log-probs so sensitive that the update runs in fp32: bf16 rounding of
+the means alone pushed 80 % of the ratios outside the clip range.
+
+**4. Eval** (`ml/eval.py`). Every model (expert, teacher, each VLA) runs one episode in each of 256 envs per stage:
+success rate per stage (race: won against the teacher). Writes `logs/eval.json` and prints a markdown table.
 
 ---
 
@@ -341,7 +420,19 @@ logs/{name}/{chunk}.bin    little-endian, 1000 frames per chunk:
   per frame: time f32, then num_bodies × (px py pz qw qx qy qz) f32 in scene body order
 ```
 
-`python -m ml.eval` writes one (`logs/policy_rollout/`).
+**Pre-recorded games** (`record_games.py`, run on a GPU): the web demo plays these, so the web server needs no GPU.
+Each is one 60 s race with a random layout, orange = the student VLA, teal = the teacher, knocked-over robots
+respawn. Next to the recording above, each game folder `logs/game_{i}/` holds:
+
+```
+game.json     {"stage": "race", "seconds": 60, "drivers": [orange, teal], "cameras": [camera ids, mosaic order],
+               "score": [[time, orange, teal], ...]}   score at t = 0 and at every change
+cameras.mp4   the 4 robot cameras at 10 Hz as one 2 × 2 mosaic (row-major in "cameras" order), H.264
+```
+
+Poses are saved at 30 Hz; a game is ~3 MB. On a CPU the live sim does not run in real time (rendering the robot
+cameras takes 90–200 ms per frame), which is why the demo plays recordings.
+
 
 ---
 
@@ -357,6 +448,9 @@ GET  /prefabs/lekiwi            LeKiwi bodies / joints / cameras at the origin
 GET  /recordings                {"recordings": [names]}
 GET  /recordings/{name}/scene   scene of a recording
 GET  /recordings/{name}/{chunk} binary chunk
+GET  /games                     {"games": [names]} recordings that are pre-recorded games
+GET  /recordings/{name}/game    a game's game.json
+GET  /recordings/{name}/cameras a game's cameras.mp4
 WS   /ws                        live simulation
 ```
 
@@ -365,25 +459,33 @@ Websocket messages:
 ```
 client -> server   {"type": "play", "scene": {...}}   pause / resume / step / stop
                    {"type": "drive", "targets": {"lekiwi/shoulder_lift": 0.3, ...}}
-                   {"type": "autopilot", "mode": "off" | "expert" | "policy"}
+                   {"type": "autopilot", "mode": "off" | "expert" | "teacher" | "student" | "expert_both" | "teacher_both" | "student_both"}
 server -> client   {"type": "frame", "time", "poses": [[px,py,pz,qw,qx,qy,qz], ...], "joints": {id: value},
-                    "cameras": [{"id", "width", "height", "rgb": base64}]}     ~30 per second
+                    "cameras": [{"id", "width", "height", "rgb": base64}],
+                    "info": {"stage", "commands": [str per robot], "score": [orange, teal], "success": [bool per robot]}}
+                    ~30 per second, "info" only in course scenes
                    {"type": "status", "state": "running" | "paused" | "stopped", "autopilot"}
                    {"type": "error", "message"}
 ```
 
 `live.py` holds the session: one world (physics + cameras as CUDA graphs on GPU) stepped in real time. The autopilot
-runs the expert, or the trained policy (`checkpoints/ppo.pt`, else `bc.pt`) from the robot's cameras, at 10 Hz. In the
-block race you drive orange and the autopilot drives teal; "expert (both)" / "policy (both)" drive both (AI vs AI).
-Race frames also carry `"info": {"score": [orange, teal]}`.
+runs the expert, the teacher (`checkpoints/final/teacher.pt`) or the student VLA (`checkpoints/final/vla_best_v13.pt`)
+at 10 Hz. A course scene (settings `"stage"`) runs that stage: you drive orange and the autopilot drives teal; the
+"_both" modes drive both. In the speedrun teal is parked, so the autopilot drives orange. A robot knocked over (base
+tipped past 60°) for 3 s respawns at its start pose (live sessions only; training ends the episode instead). The panel
+shows the stage, your command, the score and whose goal currently holds.
 
-**The editor** (`front/`) is CAD-style: scene tree left, properties right, toolbar on top.
+**The frontend** (`front/`) opens in the **simple view**, a demo for people who don't know the project: it plays
+the pre-recorded games back to back (student vs teacher races) with a scoreboard, a countdown, the four robot camera
+feeds and the rules in one sentence. One button pauses it; it says the games are pre-recorded because the web server
+has no GPU. No panels, no selection, no joint or camera markers (`src/demo.js`).
+**Advanced** (toggle top right) is the full editor: CAD-style, scene tree left, properties right, toolbar on top.
 
 - **Edit**: add boxes / spheres / cylinders, insert a LeKiwi, click to select, move/rotate gizmo with snapping, joints
   between two shift-selected bodies, every field editable (rotation shown as XYZ degrees, stored as a quaternion).
 - **Simulate**: Play sends the edited scene to the server. Drive LeKiwi with the keyboard:
   W/S forward/back, A/D strafe, Q/E turn, Y/U pan, H/J shoulder, N/M elbow, I/O wrist, K/L wrist roll,
-  Space gripper. Or switch the autopilot to expert / policy. Both camera feeds and the joint values are shown live.
+  Space gripper. Or switch the autopilot to expert / teacher / student. Both camera feeds and the joint values are shown live.
 - **Playback**: pick a recording, play / pause / speed / scrub.
 - **Camera**: left-drag orbits, ctrl+left-drag or right-drag pans (camera and pivot together), wheel zooms at a
   constant speed (pushing the pivot ahead when you pass it).
@@ -397,8 +499,8 @@ pip install -r back/requirements.txt
 python main.py                       # backend (:8080) + editor (http://localhost:5173)
 
 # learning (run in tmux, from back/)
-python -m ml.collect --task race --envs 128 --episodes 200
-python -m ml.train_bc --task race --steps 30000
-python -m ml.train_ppo --task race --init checkpoints/bc.pt --iters 2000
-python -m ml.eval --task race --ckpt checkpoints/ppo.pt
+python -m ml.train_teacher
+python -m ml.distill
+python -m ml.train_grpo
+python -m ml.eval --vla checkpoints/vla_sft.pt checkpoints/vla_grpo.pt
 ```

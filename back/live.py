@@ -2,43 +2,51 @@
 #
 # a session holds one world (1 env). messages in: play / pause / resume / step / stop / drive / autopilot.
 # frames out: {"type": "frame", "time", "poses": [[px,py,pz,qw,qx,qy,qz], ...], "joints": {id: value}, "cameras": [...],
-#              "info": {"score": [orange, teal]} in the block race}
+#              "info": {"stage": str, "commands": [str per robot], "score": [orange, teal], "success": [bool per robot]}
+#              in a course scene}  (success = the robot's stage goal holds right now)
 #
-# the scene picks the task: two LeKiwis + home zones = block race (you drive lekiwi/, the autopilot drives the
-# other robot, or both with the "_both" modes), one LeKiwi + block/i + zone/i = pick-and-place.
+# a course scene (settings "stage", see robot/course.py) runs that stage: you drive lekiwi/, the autopilot drives the
+# other robot, or both with the "_both" modes. in the speedrun robot 1 sits parked, so the autopilot drives yours.
+# a robot knocked over (base tipped past 60°) for RESPAWN_AFTER seconds is put back at its start pose.
 import base64
 import os
 import torch
 from physics.world import World
 from physics.render import Renderer
-from robot.lekiwi import PREFIX
 from robot.env import ACTION_REPEAT
-from robot.pick_place import PickPlaceEnv
-from robot.block_race import BlockRaceEnv
-from ml.expert import Expert
-from ml.policy import Policy, FrameStack
+from robot.course import CourseEnv, STAGES
+from ml.teacher import Teacher
+from ml.vla import VLA
+from ml.rollout import TeacherDriver, VLADriver, ExpertDriver
 
-CHECKPOINTS = [os.path.join(os.path.dirname(__file__), 'checkpoints', n) for n in ('ppo.pt', 'bc.pt')]
+# {mode: checkpoint} the "teacher" autopilot (state-based) and the "student" autopilot (the VLA, cameras + command)
+CHECKPOINTS = {m: os.path.join(os.path.dirname(__file__), 'checkpoints', 'final', n)
+               for m, n in (('teacher', 'teacher.pt'), ('student', 'vla_best_v13.pt'))}
 # physics steps between camera renders sent to the client (60 Hz physics -> 10 Hz camera)
 CAMERA_EVERY = 6
-AUTOPILOT_MODES = ('off', 'expert', 'policy', 'expert_both', 'policy_both')
+# seconds a knocked-over robot lies before it respawns
+RESPAWN_AFTER = 3.0
+AUTOPILOT_MODES = ('off', 'expert', 'teacher', 'student', 'expert_both', 'teacher_both', 'student_both')
+
+
+def make_driver(kind, device):
+    # "expert" | "teacher" | "student" -> its rollout driver (ml/rollout.py), models from CHECKPOINTS
+    if kind == 'expert':
+        return ExpertDriver()
+    assert kind in CHECKPOINTS, f'unknown driver {kind}'
+    path = CHECKPOINTS[kind]
+    if not os.path.exists(path):
+        raise ValueError(f'no trained {kind}: {path} is missing')
+    model = (Teacher() if kind == 'teacher' else VLA()).to(device)
+    model.load_state_dict(torch.load(path, map_location=device)['model'])
+    model.eval()
+    return TeacherDriver(model) if kind == 'teacher' else VLADriver(model)
 
 
 class LiveSession:
     def __init__(self, scene, device):
         self.device = device
-        ids = {b['id'] for b in scene['bodies']}
-        # number of block/i bodies with a matching zone/i: the pick-and-place autopilot needs them and the robot
-        num_blocks = 0
-        while f'block/{num_blocks}' in ids and f'zone/{num_blocks}' in ids:
-            num_blocks += 1
-        self.race = PREFIX + 'base' in ids and 'lekiwi2/base' in ids and 'home/0' in ids and 'home/1' in ids
-        if self.race:
-            self.env = BlockRaceEnv(1, device, scene_json=scene)
-        elif PREFIX + 'base' in ids and num_blocks > 0:
-            self.env = PickPlaceEnv(1, device, num_blocks=num_blocks, scene_json=scene)
-        else:
-            self.env = None
+        self.env = CourseEnv(1, device, scene_json=scene) if 'stage' in scene['settings'] else None
         self.world = self.env.world if self.env else World(scene, 1, device)
         self.cameras = [Renderer(self.world, c) for c in scene['cameras']]
         if str(device).startswith('cuda'):
@@ -54,65 +62,73 @@ class LiveSession:
         self.world.joints.prepare()
         self.steps = 0
         self.autopilot = 'off'
-        # [int] robots the autopilot drives
-        self.auto_robots = []
-        self.expert = None
-        self.policy = None
-        self.stack = None
+        # [(rollout driver (ml/rollout.py), [robot])] who drives which robots (the autopilot: one entry), and whether
+        # the drivers' next call starts fresh
+        self.drivers = []
+        self.fresh = True
+        if self.env:
+            # (R, 2) each robot's start base xz (its respawn spot), [float] seconds each robot has been knocked over
+            self.start_xz = self.env.base_frame()[0][0].clone()
+            self.down_for = [0.0] * self.env.R
 
     def set_autopilot(self, mode):
         assert mode in AUTOPILOT_MODES, f'unknown autopilot mode {mode}'
         if mode != 'off' and self.env is None:
-            raise ValueError('autopilot needs a lekiwi task scene (lekiwi_pick or block_race)')
-        if mode.startswith('policy'):
-            path = next((p for p in CHECKPOINTS if os.path.exists(p)), None)
-            if path is None:
-                raise ValueError('no trained policy: run python -m ml.train_bc (checkpoints/bc.pt) first')
-            self.policy = Policy().to(self.device)
-            self.policy.load_state_dict(torch.load(path, map_location=self.device)['policy'])
-            self.policy.eval()
-            self.stack = None
-        if mode.startswith('expert'):
-            self.expert = Expert(1, self.env.R)
+            raise ValueError('autopilot needs a course scene (course_1_drive, course_4_race, ...)')
+        self.fresh = True
         self.autopilot = mode
-        # race: you keep robot 0 unless "_both"; pick: the only robot
-        both = mode.endswith('_both') or not self.race
-        self.auto_robots = [] if mode == 'off' else (list(range(self.env.R)) if both else [1])
+        if mode == 'off':
+            self.drivers = []
+            return
+        # you keep robot 0 unless "_both"; only active robots (the speedrun's parked robot 1 stays parked)
+        active = self.env.active()[0].tolist()
+        robots = [r for r in range(self.env.R) if active[r] and (mode.endswith('_both') or r != 0)]
+        self.drivers = [(make_driver(mode.removesuffix('_both'), self.device), robots or [0])]
 
     def drive(self, targets):
-        # {joint_id: target} from teleop (robot 0's joints). ignored while the autopilot drives robot 0
-        if 0 not in self.auto_robots:
+        # {joint_id: target} from teleop (robot 0's joints). ignored while a driver drives robot 0
+        if not any(0 in robots for d, robots in self.drivers):
             self.world.joints.set_targets(targets)
 
     @torch.no_grad()
     def step(self):
-        # one physics step, with the autopilot choosing new targets at the 10 Hz control rate
-        if self.auto_robots and self.steps % ACTION_REPEAT == 0:
+        # one physics step, with the drivers choosing new targets at the 10 Hz control rate
+        if self.drivers and self.steps % ACTION_REPEAT == 0:
             env = self.env
-            if self.autopilot.startswith('expert'):
+            for driver, robots in self.drivers:
                 # (1, R, A)
-                targets = torch.tensor(self.expert.act(env, robots=self.auto_robots), device=self.device)
-            else:
-                obs = env.observe()
-                # one frame stack per robot: (R, C, H, W)
-                rgb = obs['rgb'][0]
-                if self.stack is None:
-                    self.stack = FrameStack(rgb)
-                frames = self.stack.push(rgb, torch.zeros(env.R, dtype=torch.bool, device=self.device))
-                action, _ = self.policy(frames, obs['proprio'][0])
-                targets = env.action_to_targets(action).unsqueeze(0)
-            for r in self.auto_robots:
-                self.world.joints.target[:, env.act_joints[r]] = targets[:, r]
+                targets = env.action_to_targets(driver(env, torch.tensor([self.fresh], device=self.device)))
+                for r in robots:
+                    self.world.joints.target[:, env.act_joints[r]] = targets[:, r]
+            self.fresh = False
+        if self.env and self.steps % ACTION_REPEAT == 0:
+            self.respawn_knocked_over()
         self.world.step()
         self.steps += 1
+
+    def respawn_knocked_over(self):
+        # called at the control rate: count how long each robot has been knocked over, put it back at its start pose
+        # (scene orientation, at rest) once it reaches RESPAWN_AFTER
+        env, w = self.env, self.world
+        flipped = env.flipped()[0].tolist()
+        env0 = torch.zeros(1, dtype=torch.long, device=self.device)
+        for r in range(env.R):
+            self.down_for[r] = self.down_for[r] + ACTION_REPEAT * w.dt if flipped[r] else 0.0
+            if self.down_for[r] < RESPAWN_AFTER:
+                continue
+            env.place_robot(env0, r, self.start_xz[r:r + 1], torch.zeros(1, device=self.device))
+            w.velocity[0, env.parts[r]] = 0.0
+            w.inv_inertia_world.copy_(w.compute_inv_inertia_world())
+            self.down_for[r] = 0.0
 
     def frame(self, with_cameras):
         # websocket frame message for env 0
         w = self.world
         msg = {'type': 'frame', 'time': w.time, 'poses': w.poses()[0].cpu().tolist(),
                'joints': dict(zip(w.joints.ids, w.joints.value[0].cpu().tolist())), 'cameras': []}
-        if self.race:
-            msg['info'] = {'score': self.env.score()[0].tolist()}
+        if self.env:
+            msg['info'] = {'stage': STAGES[int(self.env.stage[0])], 'commands': [self.env.command(0, r) for r in range(self.env.R)],
+                           'score': self.env.score()[0].tolist(), 'success': self.env.success_now()[0].tolist()}
         if with_cameras:
             for cam in self.cameras:
                 rgb = cam.render()[0].cpu().numpy()

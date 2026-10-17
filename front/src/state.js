@@ -7,6 +7,8 @@ export const app = {
   shown: null,
   // 'edit' | 'simulate' | 'playback'
   mode: 'edit',
+  // 'simple' (pick a course + who drives, press play) | 'advanced' (the full editor)
+  view: 'simple',
   // last item is the primary selection
   selection: [], // [{kind: 'body' | 'joint' | 'camera', id: str}]
 };
@@ -16,6 +18,7 @@ export const app = {
 //   'selection'       app.selection changed
 //   'pose'            gizmo is dragging a body (body pose in app.scene changed)
 //   'mode' (prev)     app.mode changed
+//   'view'            app.view changed
 //   'camera'          viewport switched between perspective / orthographic camera
 //   'simFrame' (msg), 'simStatus' (msg), 'simPlay'   websocket simulation events
 const listeners = {}; // {eventName: [fn]}
@@ -42,6 +45,12 @@ export function clickSelect(item, shift) {
   const bodies = app.selection.filter(s => s.kind === 'body'); // [{kind, id}]
   const already = bodies.some(s => s.id === item.id);
   select(already ? bodies.filter(s => s.id !== item.id) : [...bodies, item]);
+}
+
+export function setView(view) {
+  if (view === app.view) return;
+  app.view = view;
+  emit('view');
 }
 
 export function setMode(mode) {

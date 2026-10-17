@@ -13,6 +13,7 @@ import { refreshSceneList, loadScene, setScene } from './toolbar.js';
 import './simClient.js';
 import './robotPanel.js';
 import './playback.js';
+import { startGames } from './demo.js';
 
 const statusMode = document.getElementById('status-mode');
 const statusSel = document.getElementById('status-sel');
@@ -74,8 +75,10 @@ getJson('/health')
     statusBackend.className = 'offline';
   });
 
-// start with an empty scene so the editor works even without the backend, then open the first saved scene
+// start with an empty scene so the editor works even without the backend, then open the first saved scene for the
+// editor and start the simple view's pre-recorded games
 setScene(newScene('untitled'));
-refreshSceneList().then((scenes) => {
-  if (scenes.length > 0) return loadScene(scenes[0]);
+refreshSceneList().then(async (scenes) => {
+  if (scenes.length > 0) await loadScene(scenes[0]);
+  await startGames();
 });

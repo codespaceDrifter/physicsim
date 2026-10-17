@@ -10,6 +10,7 @@ export default defineConfig({
       '/prefabs': { target: backend, changeOrigin: true },
       '/recordings': { target: backend, changeOrigin: true },
       '/health': { target: backend, changeOrigin: true },
+      '/games': { target: backend, changeOrigin: true },
       '/ws': { target: 'ws://localhost:8080', ws: true },
     }
   }

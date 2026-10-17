@@ -100,10 +100,13 @@ class Joints:
         self.lam_upper = torch.zeros(world.E, self.J, device=dev)
         self.lam_drive = torch.zeros(world.E, self.J, device=dev)
 
-    def prepare(self):
-        # everything that depends only on positions, recomputed after every position update:
-        #   J_a, J_b (E, J, 6, 6) jacobian rows per side, assembled into G (E, 6J, 6N): row velocity = G v
-        #   W (E, 6N, 6J) = M⁻¹ Gᵀ, K_glob = G W, A_inv / L_inv factorized systems for the global solve
+    def prepare(self, errors_only=False):
+        # everything that depends only on positions. errors_only: just C and value (the substeps, after positions moved);
+        # the jacobians, masses and factorized systems stay from the start of the step (Box2D v3 soft step: effective
+        # masses are computed once per step, substeps only refresh the constraint errors). the full set:
+        #   J_a, J_b (E, J, 6, 6) jacobian rows per side (row velocity = J_a v_a + J_b v_b), W_a, W_b (E, J, 6, 6) =
+        #   M⁻¹ Jᵀ per side (velocity change per unit row impulse), K_glob = G M⁻¹ Gᵀ (G: the dense (E, 6J, 6N)
+        #   jacobian, only built here), A_inv / L_inv factorized systems for the global solve
         #   C (E, J, 6) position error per row, value (E, J) joint angle / slide
         #   K (E, J, 6, 6) each joint's own block of K_glob, proj / k_free for limits on the free row
         if self.J == 0:
@@ -132,6 +135,8 @@ class Joints:
         angle = 2.0 * torch.atan2(q_rel[..., 1], q_rel[..., 0])
         self.value = torch.where(self.is_revolute, wrap_angle(angle + self.initial), torch.where(self.is_prismatic, c_lin[..., 0] + self.initial, 0.0))
         self.C = torch.cat([c_lin, c_ang], dim=-1)
+        if errors_only:
+            return
         zeros = torch.zeros_like(axes)
         # (E, J, 6, 6) jacobian rows of each side: row velocity = J_a V_a + J_b V_b, V = [v, ω]
         self.J_a = torch.cat([torch.cat([-axes, -torch.cross(ra.unsqueeze(-2).expand_as(axes), axes, dim=-1)], dim=-1),
@@ -147,16 +152,17 @@ class Joints:
         jidx = torch.arange(J, device=w.device)
         G[:, jidx, a] = self.J_a
         G[:, jidx, b] = self.J_b
-        self.G = G.permute(0, 1, 3, 2, 4).reshape(E, 6 * J, 6 * N)
+        G = G.permute(0, 1, 3, 2, 4).reshape(E, 6 * J, 6 * N)
         # (E, N, 6, 6) block-diagonal inverse mass [m⁻¹ I, 0; 0, I⁻¹_world]
         minv = torch.zeros(E, N, 6, 6, device=w.device)
         minv[..., :3, :3] = torch.diag_embed(w.inv_mass.expand(E, N).unsqueeze(-1).expand(E, N, 3))
         minv[..., 3:, 3:] = w.inv_inertia_world
-        # (E, 6N, 6J) W = M⁻¹ Gᵀ, velocity change per unit row impulse
-        GT = self.G.transpose(1, 2).reshape(E, N, 6, 6 * J)
-        self.W = (minv @ GT).reshape(E, 6 * N, 6 * J)
-        # (E, 6J, 6J) K = G M⁻¹ Gᵀ over all rows
-        self.K_glob = self.G @ self.W
+        # (E, J, 6, 6) per side M⁻¹ Jᵀ: column i = velocity change of that body per unit impulse on row i
+        self.W_a = minv[:, a] @ self.J_a.transpose(-1, -2)
+        self.W_b = minv[:, b] @ self.J_b.transpose(-1, -2)
+        # (E, 6N, 6J) M⁻¹ Gᵀ -> (E, 6J, 6J) K = G M⁻¹ Gᵀ over all rows
+        GT = G.transpose(1, 2).reshape(E, N, 6, 6 * J)
+        self.K_glob = G @ (minv @ GT).reshape(E, 6 * N, 6 * J)
         # (E, J, 6, 6) each joint's own block of K (its diagonal block)
         self.K = self.K_glob.reshape(E, J, 6, J, 6).diagonal(dim1=1, dim2=3).permute(0, 3, 1, 2)
         lock = self.lock
@@ -184,18 +190,21 @@ class Joints:
         self.L_inv = spd_inverse(self.K_glob * lmask + torch.diag(1.0 - lock)) * lmask
 
     def row_velocity(self):
-        # (E, J, 6) velocity of every joint row: G v
-        w = self.world
-        return (self.G @ w.velocity.reshape(w.E, -1, 1)).reshape(w.E, self.J, 6)
+        # (E, J, 6) velocity of every joint row: J_a v_a + J_b v_b (each joint touches two bodies; multiply + sum, as in
+        # contacts: the dense G v would read a (6J, 6N) matrix per env)
+        V = self.world.velocity
+        return (self.J_a * V[:, self.body_a].unsqueeze(-2)).sum(-1) + (self.J_b * V[:, self.body_b].unsqueeze(-2)).sum(-1)
 
     def speeds(self):
         # (E, J) velocity of every joint along its free row (rad/s or m/s), 0 for fixed joints
         return (self.row_velocity() * self.free).sum(-1)
 
     def apply(self, mu):
-        # apply row impulses mu (E, J, 6) to the bodies: v += W mu
-        w = self.world
-        w.velocity = w.velocity + (self.W @ mu.reshape(w.E, -1, 1)).reshape(w.E, -1, 6)
+        # apply row impulses mu (E, J, 6) to both bodies of each joint: v += M⁻¹ Jᵀ mu (accumulate: a body in several joints)
+        V = self.world.velocity
+        env = torch.arange(V.shape[0], device=V.device).unsqueeze(-1).expand(-1, self.J)
+        V.index_put_((env, self.body_a.expand_as(env)), (self.W_a * mu.unsqueeze(-2)).sum(-1), accumulate=True)
+        V.index_put_((env, self.body_b.expand_as(env)), (self.W_b * mu.unsqueeze(-2)).sum(-1), accumulate=True)
 
     def warm_start(self):
         if self.J == 0:

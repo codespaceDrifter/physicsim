@@ -116,10 +116,11 @@ export function rebuild(scene) {
       transparent: !body.collide,
       opacity: body.collide ? 1 : 0.75,
       depthWrite: body.collide,
-      // push faces back a little so the edge lines don't z-fight
+      // solid bodies: push faces back a little so the edge lines don't z-fight. non-colliding markers (home zones, goal
+      // pads, 2 mm thin on the floor): pull them in front of the floor, which they z-fought with when zoomed out
       polygonOffset: true,
-      polygonOffsetFactor: 1,
-      polygonOffsetUnits: 1,
+      polygonOffsetFactor: body.collide ? 1 : -4,
+      polygonOffsetUnits: body.collide ? 1 : -16,
     });
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = body.collide;
@@ -232,6 +233,14 @@ export function rebuild(scene) {
     objectsById.camera.set(cam.id, lines);
   }
   highlight();
+  showHelpers();
+}
+
+// joint and camera markers are editor helpers: hidden in the simple view
+export function showHelpers() {
+  for (const map of [objectsById.joint, objectsById.camera]) {
+    for (const obj of map.values()) obj.visible = app.view !== 'simple';
+  }
 }
 
 export function highlight() {

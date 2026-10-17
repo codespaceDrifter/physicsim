@@ -1,0 +1,2233 @@
+{
+ "name": "course_1_drive",
+ "settings": {
+  "dt": 0.016666666666666666,
+  "substeps": 4,
+  "gravity": [
+   0.0,
+   -9.81,
+   0.0
+  ],
+  "G": 0.0,
+  "max_contacts": 128,
+  "stage": "drive"
+ },
+ "bodies": [
+  {
+   "id": "ground",
+   "shape": {
+    "type": "plane"
+   },
+   "position": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#9a9a9a"
+  },
+  {
+   "id": "wall/north",
+   "shape": {
+    "type": "box",
+    "size": [
+     2.48,
+     0.06,
+     0.04
+    ]
+   },
+   "position": [
+    0.0,
+    0.03,
+    -0.8200000000000001
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#5a5f66"
+  },
+  {
+   "id": "wall/south",
+   "shape": {
+    "type": "box",
+    "size": [
+     2.48,
+     0.06,
+     0.04
+    ]
+   },
+   "position": [
+    0.0,
+    0.03,
+    0.8200000000000001
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#5a5f66"
+  },
+  {
+   "id": "wall/west",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.04,
+     0.06,
+     1.6
+    ]
+   },
+   "position": [
+    -1.22,
+    0.03,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#5a5f66"
+  },
+  {
+   "id": "wall/east",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.04,
+     0.06,
+     1.6
+    ]
+   },
+   "position": [
+    1.22,
+    0.03,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#5a5f66"
+  },
+  {
+   "id": "lekiwi/base",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.125,
+    "height": 0.06
+   },
+   "position": [
+    -0.7,
+    0.135,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 509.2958178940651,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/wheel_back",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    -0.7999999999999999,
+    0.0508,
+    1.2246467991473533e-17
+   ],
+   "rotation": [
+    0.7071067811865475,
+    8.659560562354933e-17,
+    0.0,
+    0.7071067811865475
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi/wheel_left",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    -0.6499999999999999,
+    0.0508,
+    -0.08660254037844387
+   ],
+   "rotation": [
+    0.7071067811865475,
+    -0.6123724356957945,
+    0.0,
+    -0.35355339059327384
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi/wheel_right",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    -0.6499999999999999,
+    0.0508,
+    0.08660254037844387
+   ],
+   "rotation": [
+    0.7071067811865475,
+    0.6123724356957945,
+    0.0,
+    -0.35355339059327384
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi/arm_base",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.07,
+     0.06,
+     0.05
+    ]
+   },
+   "position": [
+    -0.6862999999999999,
+    0.195,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 699.9999999999999,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/shoulder",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.05,
+     0.045
+    ]
+   },
+   "position": [
+    -0.6304,
+    0.25270000000000004,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 888.8888888888888,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/upper_arm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.11602913427238866,
+     0.035
+    ]
+   },
+   "position": [
+    -0.6884345517486112,
+    0.2882293623174965,
+    0.0183
+   ],
+   "rotation": [
+    0.7464149818862297,
+    0.0,
+    0.0,
+    0.6654807847081532
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 845.4362665927579,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/forearm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.13500018518505819,
+     0.035
+    ]
+   },
+   "position": [
+    -0.6792156394325015,
+    0.3041794994175445,
+    0.0183
+   ],
+   "rotation": [
+    0.7543491774094797,
+    0.0,
+    0.0,
+    -0.6564733951514267
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 733.6850605933955,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/wrist",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.06372456355284045,
+     0.035
+    ]
+   },
+   "position": [
+    -0.5871481723322898,
+    0.2962504466378775,
+    0.00925
+   ],
+   "rotation": [
+    0.47516698512382005,
+    -0.19187264981110289,
+    0.05935316589522717,
+    -0.8566670439564128
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1180.676509078132,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi/gripper",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.09820000000000001,
+     0.016,
+     0.03
+    ]
+   },
+   "position": [
+    -0.5258708661445546,
+    0.2447565222741765,
+    0.0
+   ],
+   "rotation": [
+    0.955336489125606,
+    0.0,
+    0.0,
+    -0.2955202066613397
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1849.489795918367,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "lekiwi/jaw",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.07480000000000003,
+     0.012,
+     0.03
+    ]
+   },
+   "position": [
+    -0.5077448023491858,
+    0.2505302395590999,
+    0.0
+   ],
+   "rotation": [
+    0.955336489125606,
+    0.0,
+    0.0,
+    -0.2955202066613397
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 2228.163992869874,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "lekiwi/battery",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.03,
+     0.12
+    ]
+   },
+   "position": [
+    -0.7799999999999999,
+    0.18,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1666.6666666666667,
+   "static": false,
+   "collide": true,
+   "group": 1,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "home/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.4,
+     0.002,
+     0.4
+    ]
+   },
+   "position": [
+    -0.95,
+    0.001,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f5c49a"
+  },
+  {
+   "id": "goal/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    -0.19999999999999996,
+    0.002,
+    0.3
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    -0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f5c49a"
+  },
+  {
+   "id": "goal/0/front",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.003,
+     0.03
+    ]
+   },
+   "position": [
+    -0.19999999999999996,
+    0.003,
+    0.37
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    -0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#e8833a"
+  },
+  {
+   "id": "lekiwi2/base",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.125,
+    "height": 0.06
+   },
+   "position": [
+    0.7,
+    0.135,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    0.0,
+    1.0,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 509.2958178940651,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/wheel_back",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    0.7999999999999999,
+    0.0508,
+    -1.2246467991473533e-17
+   ],
+   "rotation": [
+    -0.0,
+    0.7071067811865475,
+    0.7071067811865475,
+    -8.659560562354933e-17
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi2/wheel_left",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    0.6499999999999999,
+    0.0508,
+    0.08660254037844387
+   ],
+   "rotation": [
+    -0.0,
+    -0.35355339059327384,
+    0.7071067811865475,
+    0.6123724356957945
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi2/wheel_right",
+   "shape": {
+    "type": "cylinder",
+    "radius": 0.0508,
+    "height": 0.025,
+    "omni": true
+   },
+   "position": [
+    0.6499999999999999,
+    0.0508,
+    -0.08660254037844387
+   ],
+   "rotation": [
+    -0.0,
+    -0.35355339059327384,
+    0.7071067811865475,
+    -0.6123724356957945
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 493.3813103474963,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "lekiwi2/arm_base",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.07,
+     0.06,
+     0.05
+    ]
+   },
+   "position": [
+    0.6862999999999999,
+    0.195,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    0.0,
+    1.0,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 699.9999999999999,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/shoulder",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.05,
+     0.045
+    ]
+   },
+   "position": [
+    0.6304,
+    0.25270000000000004,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    0.0,
+    1.0,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 888.8888888888888,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/upper_arm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.11602913427238866,
+     0.035
+    ]
+   },
+   "position": [
+    0.6884345517486112,
+    0.2882293623174965,
+    -0.0183
+   ],
+   "rotation": [
+    -0.0,
+    0.6654807847081532,
+    0.7464149818862297,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 845.4362665927579,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/forearm",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.13500018518505819,
+     0.035
+    ]
+   },
+   "position": [
+    0.6792156394325015,
+    0.3041794994175445,
+    -0.0183
+   ],
+   "rotation": [
+    -0.0,
+    -0.6564733951514267,
+    0.7543491774094797,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 733.6850605933955,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/wrist",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.06372456355284045,
+     0.035
+    ]
+   },
+   "position": [
+    0.5871481723322898,
+    0.2962504466378775,
+    -0.00925
+   ],
+   "rotation": [
+    -0.05935316589522717,
+    -0.8566670439564128,
+    0.47516698512382005,
+    0.19187264981110289
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1180.676509078132,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#f2efe6"
+  },
+  {
+   "id": "lekiwi2/gripper",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.09820000000000001,
+     0.016,
+     0.03
+    ]
+   },
+   "position": [
+    0.5258708661445546,
+    0.2447565222741765,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    -0.2955202066613397,
+    0.955336489125606,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1849.489795918367,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2bb5a8"
+  },
+  {
+   "id": "lekiwi2/jaw",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.07480000000000003,
+     0.012,
+     0.03
+    ]
+   },
+   "position": [
+    0.5077448023491858,
+    0.2505302395590999,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    -0.2955202066613397,
+    0.955336489125606,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 2228.163992869874,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2bb5a8"
+  },
+  {
+   "id": "lekiwi2/battery",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.05,
+     0.03,
+     0.12
+    ]
+   },
+   "position": [
+    0.7799999999999999,
+    0.18,
+    0.0
+   ],
+   "rotation": [
+    -0.0,
+    0.0,
+    1.0,
+    -0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1666.6666666666667,
+   "static": false,
+   "collide": true,
+   "group": 2,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2b2b2b"
+  },
+  {
+   "id": "home/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.4,
+     0.002,
+     0.4
+    ]
+   },
+   "position": [
+    0.95,
+    0.001,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#9adfd8"
+  },
+  {
+   "id": "goal/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.14,
+     0.002,
+     0.14
+    ]
+   },
+   "position": [
+    0.19999999999999996,
+    0.002,
+    -0.3
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#9adfd8"
+  },
+  {
+   "id": "goal/1/front",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.03,
+     0.003,
+     0.03
+    ]
+   },
+   "position": [
+    0.19999999999999996,
+    0.003,
+    -0.37
+   ],
+   "rotation": [
+    0.7071067811865476,
+    0.0,
+    0.7071067811865475,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": false,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#2bb5a8"
+  },
+  {
+   "id": "block/0",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    -0.3,
+    0.0175,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  },
+  {
+   "id": "block/1",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    0.0,
+    0.0175,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  },
+  {
+   "id": "block/2",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    0.3,
+    0.0175,
+    -0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  },
+  {
+   "id": "block/3",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    -0.3,
+    0.0175,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  },
+  {
+   "id": "block/4",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    0.0,
+    0.0175,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  },
+  {
+   "id": "block/5",
+   "shape": {
+    "type": "box",
+    "size": [
+     0.035,
+     0.035,
+     0.035
+    ]
+   },
+   "position": [
+    0.3,
+    0.0175,
+    0.25
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 800.0,
+   "static": false,
+   "collide": true,
+   "group": 0,
+   "friction": 0.8,
+   "restitution": 0.0,
+   "color": "#ef6fb0"
+  }
+ ],
+ "joints": [
+  {
+   "id": "lekiwi/wheel_back",
+   "type": "revolute",
+   "body_a": "lekiwi/base",
+   "body_b": "lekiwi/wheel_back",
+   "anchor": [
+    -0.7999999999999999,
+    0.0508,
+    1.2246467991473533e-17
+   ],
+   "axis": [
+    -1.0,
+    0.0,
+    1.2246467991473532e-16
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi/wheel_left",
+   "type": "revolute",
+   "body_a": "lekiwi/base",
+   "body_b": "lekiwi/wheel_left",
+   "anchor": [
+    -0.6499999999999999,
+    0.0508,
+    -0.08660254037844387
+   ],
+   "axis": [
+    0.5000000000000001,
+    0.0,
+    -0.8660254037844386
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi/wheel_right",
+   "type": "revolute",
+   "body_a": "lekiwi/base",
+   "body_b": "lekiwi/wheel_right",
+   "anchor": [
+    -0.6499999999999999,
+    0.0508,
+    0.08660254037844387
+   ],
+   "axis": [
+    0.5000000000000001,
+    0.0,
+    0.8660254037844386
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi/arm_mount",
+   "type": "fixed",
+   "body_a": "lekiwi/base",
+   "body_b": "lekiwi/arm_base",
+   "anchor": [
+    -0.7,
+    0.165,
+    0.0
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "lekiwi/battery_mount",
+   "type": "fixed",
+   "body_a": "lekiwi/base",
+   "body_b": "lekiwi/battery",
+   "anchor": [
+    -0.7799999999999999,
+    0.165,
+    0.0
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    0.0
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "lekiwi/shoulder_pan",
+   "type": "revolute",
+   "body_a": "lekiwi/arm_base",
+   "body_b": "lekiwi/shoulder",
+   "anchor": [
+    -0.6612,
+    0.2274,
+    0.0
+   ],
+   "axis": [
+    0.0,
+    -1.0,
+    -0.0
+   ],
+   "limits": [
+    -1.91986,
+    1.91986
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  },
+  {
+   "id": "lekiwi/shoulder_lift",
+   "type": "revolute",
+   "body_a": "lekiwi/shoulder",
+   "body_b": "lekiwi/upper_arm",
+   "anchor": [
+    -0.6307999999999999,
+    0.2816,
+    0.0183
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "limits": [
+    -1.74533,
+    1.74533
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": -1.7
+   },
+   "initial": -1.7
+  },
+  {
+   "id": "lekiwi/elbow_flex",
+   "type": "revolute",
+   "body_a": "lekiwi/upper_arm",
+   "body_b": "lekiwi/forearm",
+   "anchor": [
+    -0.7460691034972226,
+    0.2948587246349931,
+    0.0183
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "limits": [
+    -1.69,
+    1.69
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 1.6
+   },
+   "initial": 1.6
+  },
+  {
+   "id": "lekiwi/wrist_flex",
+   "type": "revolute",
+   "body_a": "lekiwi/forearm",
+   "body_b": "lekiwi/wrist",
+   "anchor": [
+    -0.6123621753677805,
+    0.31350027420009585,
+    0.0183
+   ],
+   "axis": [
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "limits": [
+    -1.65806,
+    1.65806
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 50.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.7
+   },
+   "initial": 0.7
+  },
+  {
+   "id": "lekiwi/wrist_roll",
+   "type": "revolute",
+   "body_a": "lekiwi/wrist",
+   "body_b": "lekiwi/gripper",
+   "anchor": [
+    -0.561934169296799,
+    0.2790006190756592,
+    0.0001999999999999988
+   ],
+   "axis": [
+    -0.8253356149096782,
+    0.5646424733950357,
+    0.0
+   ],
+   "limits": [
+    -2.74385,
+    2.84121
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 20.0,
+    "damping": 0.4,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  },
+  {
+   "id": "lekiwi/gripper",
+   "type": "revolute",
+   "body_a": "lekiwi/gripper",
+   "body_b": "lekiwi/jaw",
+   "anchor": [
+    -0.5307073597192773,
+    0.2832025666728096,
+    -0.0176
+   ],
+   "axis": [
+    -0.02766748119635673,
+    -0.04044144513057423,
+    0.999
+   ],
+   "limits": [
+    -0.174533,
+    1.74533
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 2.0,
+    "damping": 0.05,
+    "max_force": 0.25,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  },
+  {
+   "id": "lekiwi2/wheel_back",
+   "type": "revolute",
+   "body_a": "lekiwi2/base",
+   "body_b": "lekiwi2/wheel_back",
+   "anchor": [
+    0.7999999999999999,
+    0.0508,
+    -1.2246467991473533e-17
+   ],
+   "axis": [
+    1.0,
+    0.0,
+    -1.2246467991473532e-16
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi2/wheel_left",
+   "type": "revolute",
+   "body_a": "lekiwi2/base",
+   "body_b": "lekiwi2/wheel_left",
+   "anchor": [
+    0.6499999999999999,
+    0.0508,
+    0.08660254037844387
+   ],
+   "axis": [
+    -0.5000000000000001,
+    0.0,
+    0.8660254037844386
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi2/wheel_right",
+   "type": "revolute",
+   "body_a": "lekiwi2/base",
+   "body_b": "lekiwi2/wheel_right",
+   "anchor": [
+    0.6499999999999999,
+    0.0508,
+    -0.08660254037844387
+   ],
+   "axis": [
+    -0.5000000000000001,
+    0.0,
+    -0.8660254037844386
+   ],
+   "limits": null,
+   "drive": {
+    "mode": "velocity",
+    "stiffness": 0.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "target": 0.0
+   }
+  },
+  {
+   "id": "lekiwi2/arm_mount",
+   "type": "fixed",
+   "body_a": "lekiwi2/base",
+   "body_b": "lekiwi2/arm_base",
+   "anchor": [
+    0.7,
+    0.165,
+    0.0
+   ],
+   "axis": [
+    -1.0,
+    0.0,
+    -0.0
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "lekiwi2/battery_mount",
+   "type": "fixed",
+   "body_a": "lekiwi2/base",
+   "body_b": "lekiwi2/battery",
+   "anchor": [
+    0.7799999999999999,
+    0.165,
+    0.0
+   ],
+   "axis": [
+    -1.0,
+    0.0,
+    -0.0
+   ],
+   "limits": null,
+   "drive": null
+  },
+  {
+   "id": "lekiwi2/shoulder_pan",
+   "type": "revolute",
+   "body_a": "lekiwi2/arm_base",
+   "body_b": "lekiwi2/shoulder",
+   "anchor": [
+    0.6612,
+    0.2274,
+    0.0
+   ],
+   "axis": [
+    -0.0,
+    -1.0,
+    0.0
+   ],
+   "limits": [
+    -1.91986,
+    1.91986
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  },
+  {
+   "id": "lekiwi2/shoulder_lift",
+   "type": "revolute",
+   "body_a": "lekiwi2/shoulder",
+   "body_b": "lekiwi2/upper_arm",
+   "anchor": [
+    0.6307999999999999,
+    0.2816,
+    -0.0183
+   ],
+   "axis": [
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "limits": [
+    -1.74533,
+    1.74533
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": -1.7
+   },
+   "initial": -1.7
+  },
+  {
+   "id": "lekiwi2/elbow_flex",
+   "type": "revolute",
+   "body_a": "lekiwi2/upper_arm",
+   "body_b": "lekiwi2/forearm",
+   "anchor": [
+    0.7460691034972226,
+    0.2948587246349931,
+    -0.0183
+   ],
+   "axis": [
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "limits": [
+    -1.69,
+    1.69
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 100.0,
+    "damping": 2.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 1.6
+   },
+   "initial": 1.6
+  },
+  {
+   "id": "lekiwi2/wrist_flex",
+   "type": "revolute",
+   "body_a": "lekiwi2/forearm",
+   "body_b": "lekiwi2/wrist",
+   "anchor": [
+    0.6123621753677805,
+    0.31350027420009585,
+    -0.0183
+   ],
+   "axis": [
+    -0.0,
+    0.0,
+    1.0
+   ],
+   "limits": [
+    -1.65806,
+    1.65806
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 50.0,
+    "damping": 1.0,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.7
+   },
+   "initial": 0.7
+  },
+  {
+   "id": "lekiwi2/wrist_roll",
+   "type": "revolute",
+   "body_a": "lekiwi2/wrist",
+   "body_b": "lekiwi2/gripper",
+   "anchor": [
+    0.561934169296799,
+    0.2790006190756592,
+    -0.0001999999999999988
+   ],
+   "axis": [
+    0.8253356149096782,
+    0.5646424733950357,
+    -0.0
+   ],
+   "limits": [
+    -2.74385,
+    2.84121
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 20.0,
+    "damping": 0.4,
+    "max_force": 2.0,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  },
+  {
+   "id": "lekiwi2/gripper",
+   "type": "revolute",
+   "body_a": "lekiwi2/gripper",
+   "body_b": "lekiwi2/jaw",
+   "anchor": [
+    0.5307073597192773,
+    0.2832025666728096,
+    0.0176
+   ],
+   "axis": [
+    0.02766748119635673,
+    -0.04044144513057423,
+    -0.999
+   ],
+   "limits": [
+    -0.174533,
+    1.74533
+   ],
+   "drive": {
+    "mode": "position",
+    "stiffness": 2.0,
+    "damping": 0.05,
+    "max_force": 0.25,
+    "max_velocity": 5.8,
+    "target": 0.0
+   },
+   "initial": 0.0
+  }
+ ],
+ "cameras": [
+  {
+   "id": "lekiwi/front_cam",
+   "body": "lekiwi/base",
+   "position": [
+    0.125,
+    -0.025,
+    0.0
+   ],
+   "rotation": [
+    0.7010573846499779,
+    -0.09229595564125724,
+    -0.7010573846499778,
+    -0.09229595564125725
+   ],
+   "fov": 90,
+   "width": 96,
+   "height": 96
+  },
+  {
+   "id": "lekiwi/wrist_cam",
+   "body": "lekiwi/gripper",
+   "position": [
+    -0.035,
+    0.02,
+    0.04
+   ],
+   "rotation": [
+    0.7903343913115048,
+    -0.06914529963441819,
+    -0.6064449079812418,
+    -0.053057054501380825
+   ],
+   "fov": 90,
+   "width": 96,
+   "height": 96
+  },
+  {
+   "id": "lekiwi2/front_cam",
+   "body": "lekiwi2/base",
+   "position": [
+    0.125,
+    -0.025,
+    0.0
+   ],
+   "rotation": [
+    0.7010573846499779,
+    -0.09229595564125724,
+    -0.7010573846499778,
+    -0.09229595564125725
+   ],
+   "fov": 90,
+   "width": 96,
+   "height": 96
+  },
+  {
+   "id": "lekiwi2/wrist_cam",
+   "body": "lekiwi2/gripper",
+   "position": [
+    -0.035,
+    0.02,
+    0.04
+   ],
+   "rotation": [
+    0.7903343913115048,
+    -0.06914529963441819,
+    -0.6064449079812418,
+    -0.053057054501380825
+   ],
+   "fov": 90,
+   "width": 96,
+   "height": 96
+  }
+ ]
+}

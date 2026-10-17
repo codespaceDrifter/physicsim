@@ -30,7 +30,7 @@ ARM_MOUNT_X = 0.0
 FRONT_CAMERA_LOCAL = [0.125, -0.025, 0.0]
 FRONT_CAMERA_PITCH = math.radians(15)
 CAMERA_FOV = 90
-CAMERA_RES = 64
+CAMERA_RES = 96
 
 # SO-101 zero pose in URDF coordinates (z up, y left), from forward kinematics of so101_new_calib.urdf
 URDF_JOINTS = {

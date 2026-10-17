@@ -16,6 +16,9 @@ ACTION_REPEAT = 6
 PROPRIO_JOINTS = ['shoulder_pan', 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper']
 WHEELS = ['wheel_back', 'wheel_left', 'wheel_right']
 PROPRIO_DIM = len(PROPRIO_JOINTS) + len(WHEELS)
+# [int] (ACTION_DIM,) for each actuator, its reading in proprio. proprio is normalized like the actions, so
+# proprio[..., HOLD] is the action that holds every joint where it is and every wheel at its speed
+HOLD = [(PROPRIO_JOINTS + WHEELS).index(n) for n, kind in ACTUATORS]
 # cameras stacked on the channel axis of each robot's "rgb" observation: front RGB, then wrist RGB
 CAMERAS = ['front_cam', 'wrist_cam']
 ACTION_DIM = len(ACTUATORS)
@@ -82,13 +85,17 @@ class RobotEnv:
         for _ in range(ACTION_REPEAT):
             w.step()
 
-    def observe(self):
-        # {"rgb": (E, R, 3 * len(CAMERAS), H, W) uint8 (front, wrist), "proprio": (E, R, PROPRIO_DIM) float}
+    def proprio(self):
+        # (E, R, PROPRIO_DIM) arm joint angles normalized to [-1, 1], then wheel speeds / top speed
         w = self.world
         q = (w.joints.value[:, self.proprio_joints] - self.proprio_lo) / (self.proprio_hi - self.proprio_lo) * 2 - 1
         wheels = w.joints.speeds()[:, self.wheel_joints] / STS3215_SPEED
+        return torch.cat([q, wheels], -1)
+
+    def observe(self):
+        # {"rgb": (E, R, 3 * len(CAMERAS), H, W) uint8 (front, wrist), "proprio": (E, R, PROPRIO_DIM) float}
         rgb = torch.stack([torch.cat([cam.render().permute(0, 3, 1, 2) for cam in cams], dim=1) for cams in self.cameras], dim=1)
-        return {'rgb': rgb, 'proprio': torch.cat([q, wheels], -1)}
+        return {'rgb': rgb, 'proprio': self.proprio()}
 
     def grip(self):
         # (E, R, 3) grip point of each robot (between the jaws)

@@ -7,6 +7,9 @@
 #   GET  /recordings                  {"recordings": [name]}
 #   GET  /recordings/{name}/scene     scene the recording was made from
 #   GET  /recordings/{name}/{chunk}   binary chunk (format in recording.py)
+#   GET  /games                       {"games": [name]} recordings that are pre-recorded games (record_games.py)
+#   GET  /recordings/{name}/game      a game's game.json (drivers, camera ids, score over time)
+#   GET  /recordings/{name}/cameras   a game's camera mosaic video (cameras.mp4)
 #   WS   /ws                          live simulation (protocol in live.py / documentation.md)
 import asyncio
 import json
@@ -76,6 +79,28 @@ def recording_scene(name: str):
     if not path.exists():
         raise HTTPException(404, f'no recording {name}')
     return FileResponse(path, media_type='application/json')
+
+
+@app.get('/games')
+def list_games():
+    names = sorted(d.name for d in LOGS_DIR.iterdir() if (d / 'game.json').exists()) if LOGS_DIR.exists() else []
+    return {'games': names}
+
+
+@app.get('/recordings/{name}/game')
+def recording_game(name: str):
+    path = LOGS_DIR / safe_name(name) / 'game.json'
+    if not path.exists():
+        raise HTTPException(404, f'{name} is not a game')
+    return FileResponse(path, media_type='application/json')
+
+
+@app.get('/recordings/{name}/cameras')
+def recording_cameras(name: str):
+    path = LOGS_DIR / safe_name(name) / 'cameras.mp4'
+    if not path.exists():
+        raise HTTPException(404, f'{name} has no camera video')
+    return FileResponse(path, media_type='video/mp4')
 
 
 @app.get('/recordings/{name}/{chunk}')
