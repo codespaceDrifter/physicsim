@@ -28,7 +28,7 @@ back/                      python, run everything from here as modules:  cd back
     eval.py                the results table: every model on every stage
   write_scenes.py          writes scenes/course_{n}_{stage}.json, one per course stage (course_1_drive ...)
   recording.py             recording format (playback)
-  record_games.py          pre-recorded student vs teacher races for the web demo (logs/game_{i}/)
+  record_games.py          pre-recorded races for the web demo (default teacher vs teacher) (logs/game_{i}/)
   live.py                  real-time simulation session for the editor
   api.py                   FastAPI server: scenes, prefabs, recordings, websocket
   scenes/                  scene JSON files the editor opens / saves
@@ -476,7 +476,7 @@ tipped past 60°) for 3 s respawns at its start pose (live sessions only; traini
 shows the stage, your command, the score and whose goal currently holds.
 
 **The frontend** (`front/`) opens in the **simple view**, a demo for people who don't know the project: it plays
-the pre-recorded games back to back (student vs teacher races) with a scoreboard, a countdown, the four robot camera
+the pre-recorded games back to back (teacher vs teacher races; the scoreboard captions come from game.json "drivers") with a scoreboard, a countdown, the four robot camera
 feeds and the rules in one sentence. One button pauses it; it says the games are pre-recorded because the web server
 has no GPU. No panels, no selection, no joint or camera markers (`src/demo.js`).
 **Advanced** (toggle top right) is the full editor: CAD-style, scene tree left, properties right, toolbar on top.

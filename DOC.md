@@ -211,6 +211,22 @@ from scratch on all data every DAgger round (fine-tuning degraded it every round
 stalls somewhere in a 6-block run, and GRPO on outcome rewards does not move it. Drive from text stays weak (~10 %):
 the 5 cm / 10° goal has to be read from numbers in the command.
 
+**2026-10-17, drop-over-the-slot expert (teacher v15).** The teacher and the student parked just outside the old
+expert's "stand here, lower the arm" gate, holding a block over their zone (forcing the jaws open there scored every
+time). The expert now drops the block once it is over the slot (see "Drop, don't place"). The teacher was fine-tuned
+from the v9 teacher (`ml/bc_teacher.py --init`, lr 3e-4, 30k steps) on the new expert's demos (512 envs x 1200 steps,
+pick / bring / race / speedrun) plus the v9 teacher's drive rows, then 3 DAgger rounds (`logs/teacher_v15.out`).
+128 episodes per stage, race in self-play; hover = share of race time a robot holds a block over its own zone:
+
+| teacher | drive | pick | bring | race blocks (self-play) | race won vs v9 | speedrun | hover |
+|---|---|---|---|---|---|---|---|
+| v9 (old expert) | 95 % | 99 % | 100 % | 1.95 | | 87 % | 37 % |
+| **v15 r0** (fine-tuned on the demos) | 95 % | 100 % | 100 % | 2.54 | 63 % | 88 % | 9.5 % |
+| v15 r1 / r2 / r3 (DAgger rounds) | 95 % | 100 % | 100 % | 2.49 / 2.36 / 1.93 | 67 / 50 / 30 % | 66 / 51 / 43 % | 12 / 23 / 37 % |
+
+Fine-tuning on the growing DAgger data degraded it every round again, so r0 is `checkpoints/final/teacher.pt` (v9 kept
+as `checkpoints/final/teacher_v9.pt`). The student (v13) still learned the old stall and needs re-distilling from v15.
+
 ## Open decisions
 
 - v2: pretrained backbone, and whether the action head moves to flow matching (π0) or action tokens (RT-2, OpenVLA)

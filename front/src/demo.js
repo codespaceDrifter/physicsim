@@ -9,6 +9,7 @@ const playBtn = document.getElementById('demo-play');
 const scoreEl = document.getElementById('demo-score');
 const clockEl = document.getElementById('demo-clock');
 const feedsEl = document.getElementById('demo-feeds');
+const driverEls = ['orange', 'teal'].map(c => document.getElementById(`demo-${c}`)); // the scoreboard's driver captions
 const viewButtons = document.querySelectorAll('.views button');
 const HEADER_BYTES = 20; // recording chunk header: magic, seconds_per_frame, total_frames, frames_in_chunk, num_bodies
 const FRAMES_PER_CHUNK = 1000;
@@ -17,6 +18,12 @@ const RESULT_SECONDS = 4;
 // fixed view of the arena (2.4 x 1.6 m): from the south, above, aimed a bit right so the camera feeds don't cover it
 const VIEW_POSITION = [0.25, 1.7, 1.65];
 const VIEW_TARGET = [0.25, 0, 0.05];
+// scoreboard caption per driver (game.json "drivers")
+const DRIVER_LABELS = { // {driver: caption}
+  teacher: 'teacher model · sees exact positions',
+  student: 'student model · sees only its cameras',
+  expert: 'scripted expert',
+};
 // camera feed titles: robot prefix -> its color name
 const ROBOT_NAMES = { 'lekiwi/': 'orange', 'lekiwi2/': 'teal' }; // {prefix: name}
 
@@ -53,6 +60,7 @@ async function loadGame(index) {
   video.src = `/recordings/${name}/cameras`;
   if (demo.playing) video.play();
   makeFeeds(game.cameras);
+  game.drivers.forEach((d, i) => { driverEls[i].textContent = DRIVER_LABELS[d]; });
   if (app.view === 'simple') show();
 }
 

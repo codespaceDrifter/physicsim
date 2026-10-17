@@ -20,7 +20,7 @@ from robot.env import ACTION_REPEAT
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--games', type=int, default=6)
-parser.add_argument('--orange', default='student', help='expert | teacher | student')
+parser.add_argument('--orange', default='teacher', help='expert | teacher | student')
 parser.add_argument('--teal', default='teacher', help='expert | teacher | student')
 parser.add_argument('--seed', type=int, default=0)
 args = parser.parse_args()
