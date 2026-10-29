@@ -12,7 +12,7 @@ import torch
 from physics.math3d import quat_rotate, quat_rotate_inv, const
 from physics import collision
 
-PLANE, SPHERE, BOX, CYLINDER = 0, 1, 2, 3
+PLANE, SPHERE, BOX, CYLINDER, CAPSULE = 0, 1, 2, 3, 4
 # penetration allowed before pushing out (avoids jitter from contacts flickering on/off)
 LINEAR_SLOP = 0.001
 # contacts are created up to this far apart (speculative contacts prevent tunneling)
@@ -31,50 +31,60 @@ ROLLER_FRICTION = 0.02
 # anchor rotates away from the contact (rolling isn't slipping), a held block's anchors stay put
 ANCHOR_RANGE = 0.005
 # {(type_a, type_b): contact slots per pair}
-SLOTS = {(PLANE, SPHERE): 1, (PLANE, BOX): 8, (PLANE, CYLINDER): 8, (SPHERE, SPHERE): 1, (SPHERE, BOX): 1,
-         (SPHERE, CYLINDER): 1, (BOX, BOX): 25, (BOX, CYLINDER): 24, (CYLINDER, CYLINDER): 32}
+SLOTS = {(PLANE, SPHERE): 1, (PLANE, BOX): 8, (PLANE, CYLINDER): 8, (PLANE, CAPSULE): 2, (SPHERE, SPHERE): 1, (SPHERE, BOX): 1,
+         (SPHERE, CYLINDER): 1, (SPHERE, CAPSULE): 1, (BOX, BOX): 25, (BOX, CYLINDER): 24, (BOX, CAPSULE): 3,
+         (CYLINDER, CYLINDER): 32, (CAPSULE, CAPSULE): 5}
 
 
 class Contacts:
     def __init__(self, world, bodies, connected_pairs):
         self.world = world
         dev = world.device
-        types = world.shape_type.tolist()
+        types = world.geom_type.tolist()
+        geom_body = world.geom_body.tolist()
         static = world.static.tolist()
-        # candidate pairs: everything except static-static, non-colliding bodies, same nonzero group, joined by a joint
-        pairs = {}  # {(type_a, type_b): [(a, b)]}
-        for i in range(world.N):
-            for j in range(i + 1, world.N):
-                bi, bj = bodies[i], bodies[j]
-                if static[i] and static[j]:
+        # candidate geom pairs: everything except static-static, non-colliding bodies, same nonzero group, same body,
+        # bodies joined by a joint
+        pairs = {}  # {(type_a, type_b): [(geom a, geom b)]}
+        for i in range(world.num_geoms):
+            for j in range(i + 1, world.num_geoms):
+                ki, kj = geom_body[i], geom_body[j]
+                bi, bj = bodies[ki], bodies[kj]
+                if ki == kj or (static[ki] and static[kj]):
                     continue
                 if not (bi['collide'] and bj['collide']):
                     continue
                 if bi['group'] != 0 and bi['group'] == bj['group']:
                     continue
-                if (i, j) in connected_pairs:
+                if tuple(sorted((ki, kj))) in connected_pairs:
                     continue
                 a, b = (i, j) if types[i] <= types[j] else (j, i)
                 key = (types[a], types[b])
                 assert key in SLOTS, f"no collision routine for {bi['id']} vs {bj['id']} (shape types {key})"
                 pairs.setdefault(key, []).append((a, b))
-        # [((type_a, type_b), a_idx (P,), b_idx (P,))] one batched narrowphase call per pair type
+        # [((type_a, type_b), a_geom (P,), b_geom (P,))] one batched narrowphase call per pair type
         self.groups = [(key, torch.tensor([p[0] for p in ps], device=dev), torch.tensor([p[1] for p in ps], device=dev))
                        for key, ps in pairs.items()]
-        # (S,) body index of every contact slot, in group order
-        self.slot_a = torch.cat([a.repeat_interleave(SLOTS[key]) for key, a, b in self.groups]) if self.groups else torch.zeros(0, dtype=torch.long, device=dev)
-        self.slot_b = torch.cat([b.repeat_interleave(SLOTS[key]) for key, a, b in self.groups]) if self.groups else torch.zeros(0, dtype=torch.long, device=dev)
+        # (S,) geom index of every contact slot, in group order
+        slot_geom_a = torch.cat([a.repeat_interleave(SLOTS[key]) for key, a, b in self.groups]) if self.groups else torch.zeros(0, dtype=torch.long, device=dev)
+        slot_geom_b = torch.cat([b.repeat_interleave(SLOTS[key]) for key, a, b in self.groups]) if self.groups else torch.zeros(0, dtype=torch.long, device=dev)
+        # (S,) body index of every contact slot
+        self.slot_a = world.geom_body[slot_geom_a]
+        self.slot_b = world.geom_body[slot_geom_b]
         self.S = len(self.slot_a)
         fr = torch.tensor([b['friction'] for b in bodies], device=dev)
         rest = torch.tensor([b['restitution'] for b in bodies], device=dev)
         # (S,) mixing rules (Box2D): geometric mean friction, max restitution
         self.slot_friction = torch.sqrt(fr[self.slot_a] * fr[self.slot_b])
-        for b in bodies:
-            assert not b['shape'].get('omni', False) or b['shape']['type'] == 'cylinder', f"{b['id']}: only cylinders can be omni wheels"
-        omni = torch.tensor([b['shape'].get('omni', False) for b in bodies], device=dev, dtype=torch.bool)
-        # (S,) slot touches an omni wheel as body B (cylinders are body B of every pair except cylinder-cylinder,
+        shapes = [s for b in bodies for s in b['shapes']]  # [shape dict] in geom order
+        for s in shapes:
+            assert not s.get('omni', False) or s['type'] == 'cylinder', 'only cylinders can be omni wheels'
+        omni = torch.tensor([s.get('omni', False) for s in shapes], device=dev, dtype=torch.bool)
+        # (S,) slot touches an omni wheel as geom B (cylinders are geom B of every pair except cylinder-cylinder,
         # where only B's rolling direction is used: fine for a wheel bumping another robot's base)
-        self.slot_omni = omni[self.slot_b]
+        self.slot_omni = omni[slot_geom_b]
+        # (S, 3) axle of slot B's geom (its local y) in its body's frame, for omni wheel friction directions
+        self.slot_axle_local = quat_rotate(world.geom_local_quat[slot_geom_b], const([0., 1., 0.], dev).expand(self.S, 3)) if self.S else torch.zeros(0, 3, device=dev)
         self.slot_restitution = torch.maximum(rest[self.slot_a], rest[self.slot_b])
         # any pair that can bounce at all
         self.bouncy = bool((self.slot_restitution > 0).any())
@@ -101,26 +111,37 @@ class Contacts:
             return
         w = self.world
         points, normals, depths = [], [], []  # [(E, P*K, 3)], [(E, P*K, 3)], [(E, P*K)]
+        # (E, G, 3), (E, G, 4) world poses of all geoms
+        gpos, gquat = w.geom_poses(w.pos, w.quat)
+        r, hh, half = w.radius, w.half_height, w.half
         for key, a, b in self.groups:
-            pa, qa, pb, qb = w.pos[:, a], w.quat[:, a], w.pos[:, b], w.quat[:, b]
+            pa, qa, pb, qb = gpos[:, a], gquat[:, a], gpos[:, b], gquat[:, b]
             if key == (PLANE, SPHERE):
-                out = collision.plane_sphere(pa, qa, pb, w.radius[b])
+                out = collision.plane_sphere(pa, qa, pb, r[b])
             elif key == (PLANE, BOX):
-                out = collision.plane_box(pa, qa, pb, qb, w.half[b])
+                out = collision.plane_box(pa, qa, pb, qb, half[b])
             elif key == (PLANE, CYLINDER):
-                out = collision.plane_cylinder(pa, qa, pb, qb, w.radius[b], w.half_height[b])
+                out = collision.plane_cylinder(pa, qa, pb, qb, r[b], hh[b])
+            elif key == (PLANE, CAPSULE):
+                out = collision.plane_capsule(pa, qa, pb, qb, r[b], hh[b])
             elif key == (SPHERE, SPHERE):
-                out = collision.sphere_sphere(pa, w.radius[a], pb, w.radius[b])
+                out = collision.sphere_sphere(pa, r[a], pb, r[b])
             elif key == (SPHERE, BOX):
-                out = collision.sphere_box(pa, w.radius[a], pb, qb, w.half[b])
+                out = collision.sphere_box(pa, r[a], pb, qb, half[b])
             elif key == (SPHERE, CYLINDER):
-                out = collision.sphere_cylinder(pa, w.radius[a], pb, qb, w.radius[b], w.half_height[b])
+                out = collision.sphere_cylinder(pa, r[a], pb, qb, r[b], hh[b])
+            elif key == (SPHERE, CAPSULE):
+                out = collision.sphere_capsule(pa, r[a], pb, qb, r[b], hh[b])
             elif key == (BOX, BOX):
-                out = collision.box_box(pa, qa, w.half[a], pb, qb, w.half[b])
+                out = collision.box_box(pa, qa, half[a], pb, qb, half[b])
             elif key == (BOX, CYLINDER):
-                out = collision.box_cylinder(pa, qa, w.half[a], pb, qb, w.radius[b], w.half_height[b])
+                out = collision.box_cylinder(pa, qa, half[a], pb, qb, r[b], hh[b])
+            elif key == (BOX, CAPSULE):
+                out = collision.box_capsule(pa, qa, half[a], pb, qb, r[b], hh[b])
+            elif key == (CYLINDER, CYLINDER):
+                out = collision.cylinder_cylinder(pa, qa, r[a], hh[a], pb, qb, r[b], hh[b])
             else:
-                out = collision.cylinder_cylinder(pa, qa, w.radius[a], w.half_height[a], pb, qb, w.radius[b], w.half_height[b])
+                out = collision.capsule_capsule(pa, qa, r[a], hh[a], pb, qb, r[b], hh[b])
             points.append(out[0].flatten(1, 2))
             normals.append(out[1].flatten(1, 2))
             depths.append(out[2].flatten(1, 2))
@@ -170,7 +191,7 @@ class Contacts:
         # omni wheels: t1 = rolling direction (axle × n), t2 = along the axle
         n = self.normal
         ref = torch.where((n[..., :1].abs() < 0.9), const([1., 0., 0.], n.device), const([0., 1., 0.], n.device))
-        axle = quat_rotate(quat_b, const([0., 1., 0.], n.device).expand_as(n))
+        axle = quat_rotate(quat_b, self.slot_axle_local[slot])
         rolling = torch.cross(axle, n, dim=-1)
         omni = self.slot_omni[slot] & (torch.linalg.norm(rolling, dim=-1) > 0.1)
         t1 = torch.where(omni.unsqueeze(-1), rolling, torch.cross(n, ref, dim=-1))

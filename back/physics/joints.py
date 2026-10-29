@@ -8,9 +8,11 @@
 #   revolute  locks [x y z | . y z], free = row 3 (rotation about the axis)
 #   prismatic locks [. y z | x y z], free = row 0 (sliding along the axis)
 #   fixed     locks everything
-# all locked rows and all motor rows of all joints are solved together in one exact linear solve (Baraff 1996),
-# so a mechanism behaves as one rigid whole: a light link holding up a heavy arm doesn't bend. solving joints one
-# at a time (Gauss-Seidel), each joint only feels its two neighbouring bodies and soft joints sag under load.
+# all locked rows and all motor rows of a mechanism are solved together in one exact linear solve (Baraff 1996),
+# so it behaves as one rigid whole: a light link holding up a heavy arm doesn't bend. solving joints one at a time
+# (Gauss-Seidel), each joint only feels its two neighbouring bodies and soft joints sag under load.
+# the system is block diagonal over articulations (bodies connected through joints; static bodies don't connect):
+# each articulation is solved as its own dense system, batched over envs x articulations (padded to the largest).
 import math
 import torch
 from physics.math3d import quat_mul, quat_conj, quat_rotate, quat_rotate_inv, quat_to_matrix, quat_from_two_axes, wrap_angle, const, spd_inverse
@@ -47,6 +49,45 @@ class Joints:
         self.body_b = torch.tensor([world.body_index[d['body_b']] for d in defs], device=dev, dtype=torch.long)
         # {(a, b)} body index pairs (a < b) joined by a joint, they never collide with each other
         self.connected_pairs = {tuple(sorted((world.body_index[d['body_a']], world.body_index[d['body_b']]))) for d in defs}
+
+        # articulations: union-find over the dynamic bodies each joint connects
+        static = world.scene_static
+        root = list(range(world.N))  # [int] union-find parent
+
+        def find(i):
+            while root[i] != i:
+                root[i] = root[root[i]]
+                i = root[i]
+            return i
+
+        for d in defs:
+            a, b = world.body_index[d['body_a']], world.body_index[d['body_b']]
+            assert not (static[a] and static[b]), f"joint {d['id']} connects two static bodies"
+            if not static[a] and not static[b]:
+                root[find(a)] = find(b)
+        joint_art = [find(world.body_index[d['body_b' if static[world.body_index[d['body_a']]] else 'body_a']]) for d in defs]  # [root body]
+        roots = sorted(set(joint_art))  # [root body] one per articulation
+        # [[joint index]], [[body index]] per articulation, in scene order
+        art_joints = [[j for j in range(self.J) if joint_art[j] == r] for r in roots]
+        art_bodies = [[i for i in range(world.N) if not static[i] and find(i) == r] for r in roots]
+        self.A_count = len(roots)
+        # largest articulation: joints, bodies (smaller ones are padded with rows / bodies that do nothing)
+        self.Jm = max((len(js) for js in art_joints), default=0)
+        self.Nm = max((len(bs) for bs in art_bodies), default=0)
+        # (J,) each joint's articulation and its slot in it; (J,) slot of its bodies within the articulation, -1 static
+        self.art = torch.tensor([roots.index(r) for r in joint_art], device=dev, dtype=torch.long)
+        self.art_slot = torch.tensor([art_joints[roots.index(joint_art[j])].index(j) for j in range(self.J)], device=dev, dtype=torch.long)
+        slot_of = lambda j, side: -1 if static[world.body_index[defs[j][side]]] else art_bodies[roots.index(joint_art[j])].index(world.body_index[defs[j][side]])
+        self.body_slot_a = torch.tensor([slot_of(j, 'body_a') for j in range(self.J)], device=dev, dtype=torch.long)
+        self.body_slot_b = torch.tensor([slot_of(j, 'body_b') for j in range(self.J)], device=dev, dtype=torch.long)
+        # (C, Jm) joint index of each articulation slot and whether it's real, (C, Nm) the same for bodies
+        self.art_joint = torch.tensor([js + [0] * (self.Jm - len(js)) for js in art_joints], device=dev, dtype=torch.long).view(self.A_count, self.Jm)
+        self.art_joint_valid = torch.tensor([[1.0] * len(js) + [0.0] * (self.Jm - len(js)) for js in art_joints], device=dev).view(self.A_count, self.Jm)
+        self.art_body = torch.tensor([bs + [0] * (self.Nm - len(bs)) for bs in art_bodies], device=dev, dtype=torch.long).view(self.A_count, self.Nm)
+        self.art_body_valid = torch.tensor([[1.0] * len(bs) + [0.0] * (self.Nm - len(bs)) for bs in art_bodies], device=dev).view(self.A_count, self.Nm)
+        # joints whose A / B side is a dynamic body (static sides have no column in G)
+        self.dynamic_a = (self.body_slot_a >= 0).nonzero().view(-1)
+        self.dynamic_b = (self.body_slot_b >= 0).nonzero().view(-1)
 
         # joint frames from the world anchor/axis at scene definition time -> local frames on A and B
         anchor = torch.tensor([d['anchor'] for d in defs], device=dev, dtype=torch.float32).view(-1, 3)
@@ -105,10 +146,10 @@ class Joints:
         # the jacobians, masses and factorized systems stay from the start of the step (Box2D v3 soft step: effective
         # masses are computed once per step, substeps only refresh the constraint errors). the full set:
         #   J_a, J_b (E, J, 6, 6) jacobian rows per side (row velocity = J_a v_a + J_b v_b), W_a, W_b (E, J, 6, 6) =
-        #   M⁻¹ Jᵀ per side (velocity change per unit row impulse), K_glob = G M⁻¹ Gᵀ (G: the dense (E, 6J, 6N)
-        #   jacobian, only built here), A_inv / L_inv factorized systems for the global solve
+        #   M⁻¹ Jᵀ per side (velocity change per unit row impulse), K_art (E, C, 6Jm, 6Jm) = G M⁻¹ Gᵀ per articulation
+        #   (G: its dense jacobian, only built here), A_inv / L_inv its factorized systems
         #   C (E, J, 6) position error per row, value (E, J) joint angle / slide
-        #   K (E, J, 6, 6) each joint's own block of K_glob, proj / k_free for limits on the free row
+        #   K (E, J, 6, 6) each joint's own block of K_art, proj / k_free for limits on the free row
         if self.J == 0:
             return
         w = self.world
@@ -143,16 +184,17 @@ class Joints:
                               torch.cat([zeros, -axes], dim=-1)], dim=-2)
         self.J_b = torch.cat([torch.cat([axes, torch.cross(rb.unsqueeze(-2).expand_as(axes), axes, dim=-1)], dim=-1),
                               torch.cat([zeros, axes], dim=-1)], dim=-2)
-        # global system over every joint's 6 rows (Baraff 1996): solving all locked rows at once is exact for the whole
-        # mechanism, so a light link holding up a heavy arm doesn't bend (one joint at a time, a soft hinge only feels
-        # its two neighbours and sags by load / (m_eff ω²))
-        E, J, N = w.E, self.J, w.N
-        # (E, J, N, 6, 6) row jacobians placed at each joint's two bodies -> (E, 6J, 6N) dense G
-        G = torch.zeros(E, J, N, 6, 6, device=w.device)
-        jidx = torch.arange(J, device=w.device)
-        G[:, jidx, a] = self.J_a
-        G[:, jidx, b] = self.J_b
-        G = G.permute(0, 1, 3, 2, 4).reshape(E, 6 * J, 6 * N)
+        # exact system over every joint's 6 rows (Baraff 1996), one dense block per articulation: solving all locked rows
+        # at once is exact for the whole mechanism, so a light link holding up a heavy arm doesn't bend (one joint at a
+        # time, a soft hinge only feels its two neighbours and sags by load / (m_eff ω²))
+        E, N, C, Jm, Nm = w.E, w.N, self.A_count, self.Jm, self.Nm
+        # (E, C, Jm, Nm, 6, 6) row jacobians placed at each joint's two bodies (static sides left out: they don't move)
+        # -> (E, C, 6Jm, 6Nm) dense G per articulation
+        G = torch.zeros(E, C, Jm, Nm, 6, 6, device=w.device)
+        da, db = self.dynamic_a, self.dynamic_b
+        G[:, self.art[da], self.art_slot[da], self.body_slot_a[da]] = self.J_a[:, da]
+        G[:, self.art[db], self.art_slot[db], self.body_slot_b[db]] = self.J_b[:, db]
+        G = G.permute(0, 1, 2, 4, 3, 5).reshape(E, C, 6 * Jm, 6 * Nm)
         # (E, N, 6, 6) block-diagonal inverse mass [m⁻¹ I, 0; 0, I⁻¹_world]
         minv = torch.zeros(E, N, 6, 6, device=w.device)
         minv[..., :3, :3] = torch.diag_embed(w.inv_mass.expand(E, N).unsqueeze(-1).expand(E, N, 3))
@@ -160,11 +202,12 @@ class Joints:
         # (E, J, 6, 6) per side M⁻¹ Jᵀ: column i = velocity change of that body per unit impulse on row i
         self.W_a = minv[:, a] @ self.J_a.transpose(-1, -2)
         self.W_b = minv[:, b] @ self.J_b.transpose(-1, -2)
-        # (E, 6N, 6J) M⁻¹ Gᵀ -> (E, 6J, 6J) K = G M⁻¹ Gᵀ over all rows
-        GT = G.transpose(1, 2).reshape(E, N, 6, 6 * J)
-        self.K_glob = G @ (minv @ GT).reshape(E, 6 * N, 6 * J)
+        # (E, C, Nm, 6, 6) each articulation's bodies (padding: zero), (E, C, 6Nm, 6Jm) M⁻¹ Gᵀ -> (E, C, 6Jm, 6Jm) K = G M⁻¹ Gᵀ
+        minv_art = minv[:, self.art_body] * self.art_body_valid[..., None, None]
+        GT = G.transpose(-1, -2).reshape(E, C, Nm, 6, 6 * Jm)
+        self.K_art = G @ (minv_art @ GT).reshape(E, C, 6 * Nm, 6 * Jm)
         # (E, J, 6, 6) each joint's own block of K (its diagonal block)
-        self.K = self.K_glob.reshape(E, J, 6, J, 6).diagonal(dim1=1, dim2=3).permute(0, 3, 1, 2)
+        self.K = self.K_art.reshape(E, C, Jm, 6, Jm, 6).diagonal(dim1=2, dim2=4).permute(0, 1, 4, 2, 3)[:, self.art, self.art_slot]
         lock = self.lock
         # inverse of the locked block, unlocked rows masked to identity so it stays invertible
         self.K_inv = torch.linalg.inv_ex(self.K * (lock.unsqueeze(-1) * lock.unsqueeze(-2)) + torch.diag_embed(1.0 - lock))[0] * (lock.unsqueeze(-1) * lock.unsqueeze(-2))
@@ -178,16 +221,24 @@ class Joints:
         # (E, J) inverse effective mass along proj
         self.k_free = (self.proj * self.K_proj).sum(-1).clamp_min(1e-12)
 
-        # (6J,) rows in the global solve (locked + drive); (E, 6J, 6J) inverse of A = K + diag(γ on drive rows),
-        # rows outside the solve masked to identity
-        active = (self.lock + self.drive_row).reshape(-1)
+        # (C, 6Jm) rows in the solve (locked + drive; padding rows are neither); (E, C, 6Jm, 6Jm) inverse of
+        # A = K + diag(γ on drive rows), rows outside the solve masked to identity
+        valid = self.art_joint_valid[..., None]
+        active = ((self.lock + self.drive_row)[self.art_joint] * valid).reshape(C, -1)
+        gamma = ((self.drive_row * self.gamma.unsqueeze(-1))[self.art_joint] * valid).reshape(C, -1)
         mask = active.unsqueeze(-1) * active.unsqueeze(-2)
-        A = self.K_glob * mask + torch.diag((self.drive_row * self.gamma.unsqueeze(-1)).reshape(-1) + 1.0 - active)
-        self.A_inv = spd_inverse(A) * mask
-        # (E, 6J, 6J) inverse over the locked rows only: re-solves them after motors saturate at their max force
-        lock = self.lock.reshape(-1)
-        lmask = lock.unsqueeze(-1) * lock.unsqueeze(-2)
-        self.L_inv = spd_inverse(self.K_glob * lmask + torch.diag(1.0 - lock)) * lmask
+        self.A_inv = spd_inverse(self.K_art * mask + torch.diag_embed(gamma + 1.0 - active)) * mask
+        # (E, C, 6Jm, 6Jm) inverse over the locked rows only: re-solves them after motors saturate at their max force
+        locked = (self.lock[self.art_joint] * valid).reshape(C, -1)
+        lmask = locked.unsqueeze(-1) * locked.unsqueeze(-2)
+        self.L_inv = spd_inverse(self.K_art * lmask + torch.diag_embed(1.0 - locked)) * lmask
+
+    def art_mul(self, M, x):
+        # per-articulation matrices M (E, C, 6Jm, 6Jm) times per-joint row vectors x (E, J, 6) -> (E, J, 6)
+        E = x.shape[0]
+        # (E, C, 6Jm, 1) x gathered into articulation slots (padding slots read joint 0, masked to zero)
+        xa = (x[:, self.art_joint] * self.art_joint_valid[..., None]).reshape(E, self.A_count, -1, 1)
+        return (M @ xa).reshape(E, self.A_count, self.Jm, 6)[:, self.art, self.art_slot]
 
     def row_velocity(self):
         # (E, J, 6) velocity of every joint row: J_a v_a + J_b v_b (each joint touches two bodies; multiply + sum, as in
@@ -238,15 +289,15 @@ class Joints:
         r_locked = rv + (bias_rate * self.C if use_bias else 0.0)
         r_drive = rv - v_eff.unsqueeze(-1) + (self.gamma * self.lam_drive).unsqueeze(-1)
         r = torch.where(self.lock > 0, r_locked, torch.where(self.drive_row > 0, r_drive, 0.0))
-        d_lam = -(self.A_inv @ r.reshape(E, -1, 1)).reshape(E, self.J, 6)
+        d_lam = -self.art_mul(self.A_inv, r)
         # motors can't exceed their max force: clamp the drive row's accumulated impulse, then re-solve the locked rows
         # for the motor impulses actually applied (K_LL Δλ_L = -(r_L + K_LD Δλ_D)), so they stay consistent
         max_imp = self.max_force * h
         d_free = (d_lam * self.free).sum(-1)
         new_drive = torch.where(self.has_drive, torch.maximum(torch.minimum(self.lam_drive + d_free, max_imp), -max_imp), 0.0)
         d_drive = (new_drive - self.lam_drive).unsqueeze(-1) * self.drive_row
-        r_l = (r + (self.K_glob @ d_drive.reshape(E, -1, 1)).reshape(E, self.J, 6)) * self.lock
-        d_lam = -(self.L_inv @ r_l.reshape(E, -1, 1)).reshape(E, self.J, 6) + d_drive
+        r_l = (r + self.art_mul(self.K_art, d_drive)) * self.lock
+        d_lam = -self.art_mul(self.L_inv, r_l) + d_drive
         self.lam_drive = new_drive
         self.lam = self.lam + d_lam * self.lock
         self.apply(d_lam)

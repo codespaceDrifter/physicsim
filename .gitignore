@@ -17,3 +17,10 @@ __pycache__/
 *.pyc
 back/data/
 back/checkpoints/
+
+# weights and recordings anywhere
+*.pt
+*.simrec
+*.mp4
+# meshes written by back/write_hb_scenes.py (regenerated from HumanoidBench)
+back/robot/assets/mujoco/

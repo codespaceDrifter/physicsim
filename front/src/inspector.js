@@ -183,15 +183,23 @@ export function render() {
   // ---------- body ----------
   if (primary.kind === 'body') {
     const body = item;
-    const shape = body.shape;
-    choice(head, 'Shape', shape.type, Object.keys(DEFAULT_SHAPES), (type) => {
-      body.shape = structuredClone(DEFAULT_SHAPES[type]);
-      if (type === 'plane') body.static = true;
-      render();
+    // one section per shape: type, size, pose in the body frame
+    body.shapes.forEach((shape, i) => {
+      const box = body.shapes.length === 1 ? head : section(`Shape ${i + 1}`);
+      choice(box, 'Shape', shape.type, Object.keys(DEFAULT_SHAPES), (type) => {
+        body.shapes[i] = { ...structuredClone(DEFAULT_SHAPES[type]), position: shape.position, rotation: shape.rotation };
+        if (type === 'plane') body.static = true;
+        render();
+      });
+      if (shape.type === 'box') vec(box, 'Size (m)', shape.size);
+      if (['sphere', 'cylinder', 'capsule'].includes(shape.type)) num(box, 'Radius (m)', shape.radius, (v) => { shape.radius = v; });
+      if (shape.type === 'cylinder') num(box, 'Height (m)', shape.height, (v) => { shape.height = v; });
+      if (shape.type === 'capsule') num(box, 'Length (m)', shape.length, (v) => { shape.length = v; });
+      if (body.shapes.length > 1) {
+        vec(box, 'Offset (m)', shape.position);
+        euler(box, 'Offset rot (°)', shape.rotation, (q) => { shape.rotation = q; });
+      }
     });
-    if (shape.type === 'box') vec(head, 'Size (m)', shape.size);
-    if (shape.type === 'sphere' || shape.type === 'cylinder') num(head, 'Radius (m)', shape.radius, (v) => { shape.radius = v; });
-    if (shape.type === 'cylinder') num(head, 'Height (m)', shape.height, (v) => { shape.height = v; });
 
     const pose = section('Initial state');
     vec(pose, 'Position (m)', body.position);
@@ -200,7 +208,8 @@ export function render() {
     vec(pose, 'Ang. vel (rad/s)', body.angular_velocity);
 
     const phys = section('Physics');
-    num(phys, 'Density (kg/m³)', body.density, (v) => { body.density = v; });
+    // imported robot links carry their measured mass instead of a density
+    if (!('mass' in body)) num(phys, 'Density (kg/m³)', body.density, (v) => { body.density = v; });
     check(phys, 'Static', body.static, (v) => { body.static = v; });
     check(phys, 'Collide', body.collide, (v) => { body.collide = v; });
     num(phys, 'Group', body.group, (v) => { body.group = v; }, true);
@@ -217,13 +226,16 @@ export function render() {
     const volumeEl = readout(phys, 'Volume');
     const massEl = readout(phys, 'Mass');
     refreshDerived = () => {
-      const s = body.shape;
-      let volume = Infinity; // plane: infinite
-      if (s.type === 'box') volume = s.size[0] * s.size[1] * s.size[2];
-      if (s.type === 'sphere') volume = (4 / 3) * Math.PI * s.radius ** 3;
-      if (s.type === 'cylinder') volume = Math.PI * s.radius ** 2 * s.height;
+      let volume = 0; // summed over the shapes, infinite with a plane
+      for (const sh of body.shapes) {
+        if (sh.type === 'plane') volume = Infinity;
+        if (sh.type === 'box') volume += sh.size[0] * sh.size[1] * sh.size[2];
+        if (sh.type === 'sphere') volume += (4 / 3) * Math.PI * sh.radius ** 3;
+        if (sh.type === 'cylinder') volume += Math.PI * sh.radius ** 2 * sh.height;
+        if (sh.type === 'capsule') volume += Math.PI * sh.radius ** 2 * sh.length + (4 / 3) * Math.PI * sh.radius ** 3;
+      }
       volumeEl.textContent = volume === Infinity ? '∞' : `${fmt(volume)} m³`;
-      massEl.textContent = body.static ? '∞ (static)' : `${fmt(volume * body.density)} kg`;
+      massEl.textContent = body.static ? '∞ (static)' : `${fmt('mass' in body ? body.mass : volume * body.density)} kg`;
     };
     refreshDerived();
   }

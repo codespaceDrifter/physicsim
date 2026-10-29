@@ -4,6 +4,7 @@ import { app, on, emit, setMode, setView } from './state.js';
 import { getJson, getBinary } from './api.js';
 import { applyPoses, showHelpers } from './sceneView.js';
 import { camera, controls, onTick } from './viewport.js';
+import { parseSimrec } from './simrec.js';
 
 const playBtn = document.getElementById('demo-play');
 const scoreEl = document.getElementById('demo-score');
@@ -11,14 +12,12 @@ const clockEl = document.getElementById('demo-clock');
 const feedsEl = document.getElementById('demo-feeds');
 const driverEls = ['orange', 'teal'].map(c => document.getElementById(`demo-${c}`)); // the scoreboard's driver captions
 const viewButtons = document.querySelectorAll('.views button');
-const HEADER_BYTES = 20; // recording chunk header: magic, seconds_per_frame, total_frames, frames_in_chunk, num_bodies
-const FRAMES_PER_CHUNK = 1000;
 // seconds the final score stays up before the next game
 const RESULT_SECONDS = 4;
 // fixed view of the arena (2.4 x 1.6 m): from the south, above, aimed a bit right so the camera feeds don't cover it
 const VIEW_POSITION = [0.25, 1.7, 1.65];
 const VIEW_TARGET = [0.25, 0, 0.05];
-// scoreboard caption per driver (game.json "drivers")
+// scoreboard caption per driver (the recording's info "drivers")
 const DRIVER_LABELS = { // {driver: caption}
   teacher: 'teacher model · sees exact positions',
   student: 'student model · sees only its cameras',
@@ -33,7 +32,7 @@ video.playsInline = true;
 const demo = {
   games: [], // [recording name]
   index: -1, // game being shown
-  game: null, // its game.json {stage, seconds, drivers, cameras, score: [[time, orange, teal]]} + scene, frames
+  game: null, // its recording info {stage, seconds, drivers, cameras, score: [[time, orange, teal]]} + rec (parseSimrec)
   t: 0, // playhead, s (runs past game.seconds while the result shows)
   playing: true,
   feeds: [], // [{ctx, x, y}] canvas + its tile in the mosaic, "cameras" order
@@ -41,19 +40,9 @@ const demo = {
 
 async function loadGame(index) {
   const name = demo.games[index];
-  const [scene, game] = await Promise.all([getJson(`/recordings/${name}/scene`), getJson(`/recordings/${name}/game`)]);
-  // every chunk up front (a 60 s game is ~2 MB): [Float32Array] per chunk, per frame time then poses
-  const first = new DataView(await getBinary(`/recordings/${name}/0`));
-  if (String.fromCharCode(...[0, 1, 2, 3].map(i => first.getUint8(i))) !== 'SIMR') throw new Error(`${name}: not a recording`);
-  const total = first.getUint32(8, true);
-  const chunks = [first.buffer];
-  for (let c = 1; c * FRAMES_PER_CHUNK < total; c++) chunks.push(await getBinary(`/recordings/${name}/${c}`));
-  const stride = 1 + 7 * scene.bodies.length; // floats per frame
-  game.frames = chunks.map(b => new Float32Array(b, HEADER_BYTES, new DataView(b).getUint32(12, true) * stride));
-  game.secondsPerFrame = first.getFloat32(4, true);
-  game.total = total;
-  game.stride = stride;
-  game.scene = scene;
+  // the whole recording up front (a 60 s game is ~2 MB)
+  const rec = await parseSimrec(await getBinary(`/recordings/${name}`));
+  const game = { ...rec.info, rec };
   demo.index = index;
   demo.game = game;
   demo.t = 0;
@@ -66,7 +55,8 @@ async function loadGame(index) {
 
 function show() {
   // put the game's scene on screen, seen from the fixed view
-  app.shown = demo.game.scene;
+  app.meshes = { ...app.meshes, ...demo.game.rec.meshes };
+  app.shown = demo.game.rec.scene;
   emit('scene', 'demo');
   camera.position.set(...VIEW_POSITION);
   controls.target.set(...VIEW_TARGET);
@@ -90,10 +80,9 @@ function makeFeeds(ids) {
 function draw() {
   // the frame under the playhead, the score at that time, the clock and the camera feeds
   const g = demo.game;
-  const frame = Math.min(Math.floor(demo.t / g.secondsPerFrame), g.total - 1);
-  const data = g.frames[Math.floor(frame / FRAMES_PER_CHUNK)];
-  const offset = (frame % FRAMES_PER_CHUNK) * g.stride;
-  applyPoses(data.subarray(offset + 1, offset + g.stride));
+  const rec = g.rec;
+  const frame = Math.min(Math.floor(demo.t / rec.secondsPerFrame), rec.frames - 1);
+  applyPoses(rec.data.subarray(frame * rec.stride + 1, (frame + 1) * rec.stride));
   const [, orange, teal] = g.score.findLast(([time]) => time <= demo.t);
   scoreEl.textContent = `${orange} : ${teal}`;
   const left = Math.max(0, Math.ceil(g.seconds - demo.t));

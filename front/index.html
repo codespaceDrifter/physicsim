@@ -61,6 +61,8 @@
 
       <div class="group only-playback adv">
         <select id="rec-select" title="Recording"></select>
+        <button id="pb-open" title="Open a .simrec file (or drop one anywhere)">Open…</button>
+        <input type="file" id="pb-file" accept=".simrec" hidden>
         <button id="pb-play" class="primary">▶ Play</button>
         <select id="pb-speed" title="Playback speed">
           <option value="0.25">0.25×</option>
@@ -114,6 +116,7 @@
         1 v 1 race: each robot carries blocks into its own home zone (the square in its color); after 60 s the one with
         more blocks home wins. Stealing allowed. Both robots are AI models: no human, no script.
       </div>
+      <div id="pb-caption" class="only-playback" hidden></div>
       <div id="timeline" class="only-playback">
         <input type="range" id="pb-slider" min="0" max="0" value="0" step="1">
         <span id="pb-time">0.000 s</span>

@@ -161,6 +161,12 @@ fieldset:disabled input, fieldset:disabled select { opacity: 0.6; }
 #feeds .feed canvas { height: calc((100vh - 42px - 24px - 20px - 3 * 6px - 4 * 23px) / 4); width: auto; }
 
 /* simple view: scoreboard top center, camera feeds right, the rules bottom left */
+/* a demo recording's request and the command running now (info.captions, see ml/demo_humanoid.py) */
+#pb-caption {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 6px;
+  background: rgba(0, 0, 0, 0.6); color: var(--text); font-size: 14px; text-align: center; pointer-events: none;
+}
+#pb-caption b { color: #fff; font-family: ui-monospace, monospace; }
 #demo-board {
   position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 2;
   padding: 8px 18px; border-radius: 8px; text-align: center;

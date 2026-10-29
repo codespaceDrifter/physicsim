@@ -121,7 +121,7 @@ def lekiwi(prefix=PREFIX, group=GROUP, accent='#e8833a'):
     dark = '#2b2b2b'
 
     def part(name, shape, pos, mass, volume, color, rotation=identity, friction=0.8):
-        return {'id': P + name, 'shape': shape, 'position': [float(v) for v in pos], 'rotation': rotation,
+        return {'id': P + name, 'shapes': [{**shape, 'position': [0.0, 0.0, 0.0], 'rotation': identity}], 'position': [float(v) for v in pos], 'rotation': rotation,
                 'velocity': [0.0, 0.0, 0.0], 'angular_velocity': [0.0, 0.0, 0.0], 'density': mass / volume,
                 'static': False, 'collide': True, 'group': group, 'friction': friction, 'restitution': 0.0, 'color': color}
 

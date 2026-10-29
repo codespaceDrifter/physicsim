@@ -4,7 +4,7 @@ import math
 import torch
 from physics.math3d import quat_mul, quat_rotate, quat_rotate_inv, const
 
-PLANE, SPHERE, BOX, CYLINDER = 0, 1, 2, 3
+PLANE, SPHERE, BOX, CYLINDER, CAPSULE = 0, 1, 2, 3, 4
 # light direction (toward the light), ambient and diffuse weights
 LIGHT = [0.4, 1.0, 0.3]
 AMBIENT = 0.4
@@ -36,10 +36,11 @@ class Renderer:
         yy, xx = torch.meshgrid(ys, xs, indexing='ij')
         dirs = torch.stack([xx, yy, -torch.ones_like(xx)], dim=-1).view(-1, 3)
         self.dirs = dirs / torch.linalg.norm(dirs, dim=-1, keepdim=True)
-        # (N, 3) body colors 0..1
-        self.colors = torch.tensor([[int(b['color'][i:i + 2], 16) / 255 for i in (1, 3, 5)] for b in world.scene['bodies']], device=dev)
-        # (Ns,) body indices of each shape type
-        self.by_type = {t: (world.shape_type == t).nonzero().view(-1) for t in (PLANE, SPHERE, BOX, CYLINDER)}
+        # (G, 3) geom colors 0..1 (each geom has its body's color)
+        body_colors = torch.tensor([[int(b['color'][i:i + 2], 16) / 255 for i in (1, 3, 5)] for b in world.scene['bodies']], device=dev)
+        self.colors = body_colors[world.geom_body]
+        # (Gs,) geom indices of each shape type
+        self.by_type = {t: (world.geom_type == t).nonzero().view(-1) for t in (PLANE, SPHERE, BOX, CYLINDER, CAPSULE)}
 
     def enable_cuda_graph(self):
         # record render() as a CUDA graph (one launch instead of thousands of small kernels). call after the world's
@@ -72,15 +73,17 @@ class Renderer:
 
     def render_envs(self, envs):
         w = self.world
-        pos, quat = w.pos[envs], w.quat[envs]
-        E = pos.shape[0]
+        body_pos, body_quat = w.pos[envs], w.quat[envs]
+        E = body_pos.shape[0]
         # camera pose in world. (E, 3), (E, 4)
-        cam_q = quat_mul(quat[:, self.body], self.local_quat)
-        origin = pos[:, self.body] + quat_rotate(quat[:, self.body], self.local_pos)
+        cam_q = quat_mul(body_quat[:, self.body], self.local_quat)
+        origin = body_pos[:, self.body] + quat_rotate(body_quat[:, self.body], self.local_pos)
+        # (E, G, 3), (E, G, 4) world poses of every geom
+        pos, quat = w.geom_poses(body_pos, body_quat)
         # (E, R, 3) world ray directions, R = H*W
         d = quat_rotate(cam_q.unsqueeze(1), self.dirs.unsqueeze(0))
         R = d.shape[1]
-        # closest hit so far: distance (E, R), world normal (E, R, 3), body index (E, R), -1 = sky
+        # closest hit so far: distance (E, R), world normal (E, R, 3), geom index (E, R), -1 = sky
         best_t = torch.full((E, R), FAR, device=w.device)
         best_n = torch.zeros(E, R, 3, device=w.device)
         best_i = torch.full((E, R), -1, device=w.device, dtype=torch.long)
@@ -163,12 +166,41 @@ class Renderer:
             n_l = torch.where(side.unsqueeze(-1), n_side, n_cap)
             keep(torch.minimum(t_side, t_cap), quat_rotate(q.unsqueeze(1), n_l), idx)
 
+        idx = self.by_type[CAPSULE]
+        if len(idx):
+            q = quat[:, idx]
+            o_l = quat_rotate_inv(q, origin.unsqueeze(1) - pos[:, idx]).unsqueeze(1)
+            d_l = quat_rotate_inv(q.unsqueeze(1), d.unsqueeze(2))
+            r, hh = w.radius[idx], w.half_height[idx]
+            # side: infinite cylinder around the segment, valid where |y| <= hh
+            a = d_l[..., 0] ** 2 + d_l[..., 2] ** 2
+            b = o_l[..., 0] * d_l[..., 0] + o_l[..., 2] * d_l[..., 2]
+            c = o_l[..., 0] ** 2 + o_l[..., 2] ** 2 - r * r
+            disc = b * b - a * c
+            t_side = (-b - torch.sqrt(disc.clamp_min(0))) / a.clamp_min(1e-12)
+            y_side = o_l[..., 1] + t_side * d_l[..., 1]
+            t_side = torch.where((disc > 0) & (t_side > 0) & (y_side.abs() <= hh), t_side, FAR)
+            # caps: spheres at y = ±hh
+            ts, ns = [t_side], [o_l + d_l * t_side.unsqueeze(-1) - y_side.unsqueeze(-1) * const([0., 1., 0.], w.device)]
+            for sign in (1.0, -1.0):
+                oc = o_l - const([0., 1., 0.], w.device) * (sign * hh).unsqueeze(-1)
+                bs = (d_l * oc).sum(-1)
+                disc_s = bs * bs - ((oc * oc).sum(-1) - r * r)
+                t_s = -bs - torch.sqrt(disc_s.clamp_min(0))
+                ts.append(torch.where((disc_s > 0) & (t_s > 0), t_s, FAR))
+                ns.append(oc + d_l * t_s.unsqueeze(-1))
+            # (E, R, S) nearest of side and the two caps; normal = hit minus nearest segment point, over r
+            t_all = torch.stack(ts, -1)
+            t, which = t_all.min(-1)
+            n_l = torch.stack(ns, -2).gather(-2, which[..., None, None].expand(*which.shape, 1, 3)).squeeze(-2) / r[:, None]
+            keep(t, quat_rotate(q.unsqueeze(1), n_l), idx)
+
         # shading: lambert + ambient on the body color, checkerboard on the ground, gradient sky
         light = const(LIGHT, w.device) / math.sqrt(sum(v * v for v in LIGHT))
         lambert = (best_n * light).sum(-1).clamp_min(0)
         color = self.colors[best_i.clamp_min(0)] * (AMBIENT + DIFFUSE * lambert).unsqueeze(-1)
         hit = origin.unsqueeze(1) + d * best_t.clamp_max(1e3).unsqueeze(-1)
-        is_plane = (w.shape_type[best_i.clamp_min(0)] == PLANE) & (best_i >= 0)
+        is_plane = (w.geom_type[best_i.clamp_min(0)] == PLANE) & (best_i >= 0)
         odd = (torch.floor(hit[..., 0] / CHECKER) + torch.floor(hit[..., 2] / CHECKER)) % 2 == 1
         color = torch.where((is_plane & odd).unsqueeze(-1), color * CHECKER_DARK, color)
         up = d[..., 1:2].clamp(0, 1)

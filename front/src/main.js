@@ -32,7 +32,9 @@ function updateStatus() {
 on('scene', (source) => {
   rebuild(app.shown);
   // zoom / pan speed follows the scene's size: spread of the non-plane bodies (a 1 m robot scene vs 700 m of stars)
-  const points = app.shown.bodies.filter(b => b.shape.type !== 'plane').map(b => new THREE.Vector3(...b.position)); // [Vector3]
+  // (no scene shown: playback before a recording is open)
+  const bodies = app.shown ? app.shown.bodies : []; // [body]
+  const points = bodies.filter(b => b.shapes.every(sh => sh.type !== 'plane')).map(b => new THREE.Vector3(...b.position)); // [Vector3]
   const size = points.length > 0 ? new THREE.Box3().setFromPoints(points).getSize(new THREE.Vector3()).length() : 1;
   setNavigationScale(Math.max(size, 0.5));
   attachGizmo();

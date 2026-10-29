@@ -5,7 +5,7 @@ import { LIST_KEY } from './model.js';
 const root = document.getElementById('outliner-tree');
 const collapsed = new Set(); // {"kind:folder/path/"} collapsed folders ("kind:" = whole section)
 
-const SHAPE_ICONS = { box: '▣', sphere: '●', cylinder: '◖', plane: '▭' }; // {shape type: icon}
+const SHAPE_ICONS = { box: '▣', sphere: '●', cylinder: '◖', capsule: '⬭', plane: '▭' }; // {shape type: icon}
 const JOINT_ICONS = { revolute: '⟳', prismatic: '⇕', fixed: '⊕' }; // {joint type: icon}
 const SECTIONS = [['body', 'Bodies'], ['joint', 'Joints'], ['camera', 'Cameras']]; // [[kind, title]]
 
@@ -57,7 +57,7 @@ export function render() {
         if (isOpen) draw(child, childPath, depth + 1);
       }
       for (const item of node.items) {
-        const icon = kind === 'body' ? SHAPE_ICONS[item.shape.type] : kind === 'joint' ? JOINT_ICONS[item.type] : '◫';
+        const icon = kind === 'body' ? SHAPE_ICONS[item.shapes.length ? item.shapes[0].type : 'box'] : kind === 'joint' ? JOINT_ICONS[item.type] : '◫';
         const meta = kind === 'body' ? (item.static ? 'static' : '') : kind === 'joint' ? item.type : item.body;
         const el = row(depth, selected.has(`${kind}:${item.id}`) ? 'selected' : '', '', icon, item.id.split('/').at(-1), meta);
         if (kind === 'body') el.querySelector('.icon').style.color = item.color;

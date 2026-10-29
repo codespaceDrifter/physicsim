@@ -334,3 +334,108 @@ def box_box(pA, qA, hA, pB, qB, hB):
     normal = torch.cat([n_face.unsqueeze(2).expand(E, P, 24, 3), nE.unsqueeze(2)], dim=2)
     depth = torch.cat([face_depth, edge_depth.unsqueeze(2)], dim=2)
     return point, normal, depth
+
+
+# capsules: a segment along local y from -hh to +hh (hh = half its length) swept by a sphere of radius r
+
+
+def closest_on_segment(p, c, a, hh):
+    # closest point to p (..., 3) on the segment c + a t, t in [-hh, hh] (a unit). -> (..., 3)
+    t = torch.maximum(torch.minimum(((p - c) * a).sum(-1), hh), -hh)
+    return c + a * t.unsqueeze(-1)
+
+
+def plane_capsule(pA, qA, pB, qB, rB, hhB):
+    # the two cap spheres against the plane
+    n = quat_rotate(qA, const([0., 1., 0.], pA.device).expand_as(pA))
+    a = quat_rotate(qB, const([0., 1., 0.], pA.device).expand_as(pA))
+    # (E, P, 2, 3) cap centers
+    ends = pB.unsqueeze(2) + torch.stack([a, -a], dim=2) * hhB[:, None, None]
+    dist = (n.unsqueeze(2) * (ends - pA.unsqueeze(2))).sum(-1)
+    point = ends - n.unsqueeze(2) * ((rB[:, None] + dist) / 2).unsqueeze(-1)
+    return point, n.unsqueeze(2).expand_as(point), rB[:, None] - dist
+
+
+def sphere_capsule(pA, rA, pB, qB, rB, hhB):
+    # sphere against the nearest point of the capsule's segment
+    a = quat_rotate(qB, const([0., 1., 0.], pA.device).expand_as(pA))
+    return sphere_sphere(pA, rA, closest_on_segment(pA, pB, a, hhB), rB)
+
+
+def capsule_capsule(pA, qA, rA, hhA, pB, qB, rB, hhB):
+    # 5 slots: the closest points of the two segments (crossing capsules), then each segment end against the other
+    # segment (parallel capsules lying side by side need two points to rest without rocking)
+    a = quat_rotate(qA, const([0., 1., 0.], pA.device).expand_as(pA))
+    b = quat_rotate(qB, const([0., 1., 0.], pA.device).expand_as(pA))
+    # segment-segment closest points (Ericson, Real-Time Collision Detection 5.1.9) with unit directions
+    r = pA - pB
+    ab = (a * b).sum(-1)
+    c = (a * r).sum(-1)
+    f = (b * r).sum(-1)
+    denom = 1 - ab * ab
+    # parallel segments: any s works, the end slots carry the contact
+    s = torch.where(denom > 1e-6, (ab * f - c) / denom.clamp_min(1e-6), torch.zeros_like(c))
+    s = torch.maximum(torch.minimum(s, hhA), -hhA)
+    t = torch.maximum(torch.minimum(ab * s + f, hhB), -hhB)
+    s = torch.maximum(torch.minimum(ab * t - c, hhA), -hhA)
+    endsA = pA.unsqueeze(2) + torch.stack([a, -a], dim=2) * hhA[:, None, None]
+    endsB = pB.unsqueeze(2) + torch.stack([b, -b], dim=2) * hhB[:, None, None]
+    # (E, P, 5, 3) matching points on segment A and segment B
+    onA = torch.cat([(pA + a * s.unsqueeze(-1)).unsqueeze(2), endsA,
+                     closest_on_segment(endsB, pA.unsqueeze(2), a.unsqueeze(2), hhA[:, None])], dim=2)
+    onB = torch.cat([(pB + b * t.unsqueeze(-1)).unsqueeze(2),
+                     closest_on_segment(endsA, pB.unsqueeze(2), b.unsqueeze(2), hhB[:, None]), endsB], dim=2)
+    delta = onB - onA
+    dist = torch.linalg.norm(delta, dim=-1)
+    # segments touching: push apart perpendicular to both (or to A alone if they're parallel)
+    perp = torch.cross(a, b, dim=-1)
+    ref = torch.where(a[..., :1].abs() < 0.9, const([1., 0., 0.], pA.device), const([0., 1., 0.], pA.device))
+    perp = torch.where((torch.linalg.norm(perp, dim=-1) < 1e-6).unsqueeze(-1), torch.cross(a, ref, dim=-1), perp)
+    perp = perp / torch.linalg.norm(perp, dim=-1, keepdim=True).clamp_min(1e-9)
+    n = torch.where((dist < 1e-9).unsqueeze(-1), perp.unsqueeze(2).expand_as(delta), delta / dist.clamp_min(1e-9).unsqueeze(-1))
+    depth = rA[:, None] + rB[:, None] - dist
+    point = onA + n * (rA[:, None] - depth / 2).unsqueeze(-1)
+    return point, n, depth
+
+
+def box_capsule(pA, qA, hA, pB, qB, rB, hhB):
+    # 3 points of the capsule's segment, each tested as a sphere against the box: the two ends and the point of the
+    # segment deepest in (or closest to) the box. the box's signed distance is convex along the segment, so a ternary
+    # search finds that point
+    c = quat_rotate_inv(qA, pB - pA)
+    ax = quat_rotate_inv(qA, quat_rotate(qB, const([0., 1., 0.], pA.device).expand_as(pA)))
+    hh = hhB.expand_as(c[..., 0])
+    lo, hi = -hh, hh
+    for _ in range(16):
+        m1, m2 = lo + (hi - lo) / 3, hi - (hi - lo) / 3
+        closer = box_closest(c + ax * m1.unsqueeze(-1), hA)[2] < box_closest(c + ax * m2.unsqueeze(-1), hA)[2]
+        lo, hi = torch.where(closer, lo, m1), torch.where(closer, m2, hi)
+    t = (lo + hi) / 2
+    # (E, P, 3, 3) segment points in the box frame
+    pts = c.unsqueeze(2) + ax.unsqueeze(2) * torch.stack([hh, -hh, t], dim=-1).unsqueeze(-1)
+    surf, n_out, sd = box_closest(pts, hA.unsqueeze(-2))
+    point = pA.unsqueeze(2) + quat_rotate(qA.unsqueeze(2), (surf + pts - n_out * rB[:, None, None]) / 2)
+    # the box's outward normal points toward the capsule: that's A -> B
+    return point, quat_rotate(qA.unsqueeze(2), n_out), rB[:, None] - sd
+
+
+def segment_distance(p0, p1, q0, q1):
+    # distance between segments p0-p1 and q0-q1 (..., 3) (Ericson, Real-Time Collision Detection 5.1.9; a zero-length
+    # segment is a point) -> (...)
+    d1, d2, r = p1 - p0, q1 - q0, p0 - q0
+    a, e, f = (d1 * d1).sum(-1), (d2 * d2).sum(-1), (d2 * r).sum(-1)
+    b, c = (d1 * d2).sum(-1), (d1 * r).sum(-1)
+    p_point, q_point = a <= 1e-9, e <= 1e-9
+    denom = a * e - b * b
+    # general case: s on the line closest to segment 2 (any s if parallel), then t for that s, clamped
+    s = torch.where(denom > 1e-9, ((b * f - c * e) / denom.clamp_min(1e-9)).clamp(0, 1), torch.zeros_like(a))
+    t = (b * s + f) / e.clamp_min(1e-9)
+    t_c = t.clamp(0, 1)
+    # t clamped: recompute s for it
+    s = torch.where(t != t_c, ((b * t_c - c) / a.clamp_min(1e-9)).clamp(0, 1), s)
+    # segment 2 is a point: t = 0, s = its projection; segment 1 is a point: s = 0, t = its projection
+    s = torch.where(q_point, (-c / a.clamp_min(1e-9)).clamp(0, 1), s)
+    t_c = torch.where(q_point, 0.0, t_c)
+    s = torch.where(p_point, 0.0, s)
+    t_c = torch.where(p_point, torch.where(q_point, 0.0, (f / e.clamp_min(1e-9)).clamp(0, 1)), t_c)
+    return torch.linalg.norm((p0 + d1 * s[..., None]) - (q0 + d2 * t_c[..., None]), dim=-1)

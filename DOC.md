@@ -233,3 +233,78 @@ as `checkpoints/final/teacher_v9.pt`). The student (v13) still learned the old s
   (both handle moments with two valid answers, like going left or right around the opponent; a gaussian averages
   them).
 - Hyperparameters that only a GPU run can settle: GRPO learning rate (1e-6, watch the clip fraction) and β.
+
+# humanoid courses
+
+Final goal: type to the robot, "pick up the red box and put it on the blue pad", and a simulated Unitree G1 does it.
+A randomized warehouse floor (boxes and color-matched destination pads anywhere) counts as solved when the robot puts
+every box on its own color's pad, as fast as possible, from the floor up, with real contact physics (no welded grasps).
+
+## Now: the pure motor baseline on MuJoCo (2026-10-26)
+
+Before any language / VLM merging, a pure motor model ("an animal, not a human"): no words, one task vector input.
+- **Backend**: MuJoCo Warp (GPU MuJoCo, `robot/mj_warehouse.py`), what papers and HumanoidBench use; physicsim stays
+  (`--backend physicsim`). 75k control steps/s at 4096 worlds on the A100 (physicsim: ~5k). The G1 is Menagerie's
+  `g1_mjx.xml` with its collision geoms enabled against the floor and box (the file disables all contacts), friction
+  on, the rubber-hand boxes; contact sensors give foot contact, falls and palm forces. Solver 10 / 20 iterations
+  (Playground's 5 / 8 are for feet-only contacts).
+- **Course**: walk → pick (one box off the floor) → deliver (onto a pad), same recipe, pass tests and curriculum.
+- **Policy**: the same transformer; command = one token from [stage one-hot, walk command, box pose / velocity, pad
+  position] (HumanoidBench-style object state), no camera.
+- **Run**: `~/mjenv/bin/python -m ml.train_humanoid --backend mujoco --out checkpoints/mj_v1.pt` (tmux `mj`);
+  record with `ml/record_mj.py`.
+- **HumanoidBench**: installed on the A100 (`~/humanoid-bench`, venv `~/hbenv`, `render_mode=None` headless). Its G1
+  is a different variant (37 torque actuators with dexterous hands) from ours (29 position joints, rubber hands);
+  `g1-truck` isn't supported for G1.
+
+## Design: two systems (the Helix / GR00T / SayCan pattern)
+
+- **System 1, the body policy** (`ml/humanoid_policy.py`, trained by RL in sim, `ml/train_humanoid.py`): a
+  transformer (~12M parameters: width 384, 6 layers; a 26M one updated 3.5x slower than the old 2.4M one on the A100,
+  this one 2.5x) at 50 Hz on the robot's own sensors (16 steps of joint angles / speeds, IMU, packed 4 per token), its
+  head camera (64x64 RGB) and a skill command in a fixed vocabulary, the exact sentences of the course below. It
+  finds the named things in its camera itself. It never sees free-form language.
+- **System 2, the brain** (`ml/planner.py`): Qwen3.5-4B (MINDOLOGY's synapse implementation, copied to `ml/qwen`
+  with its imports adapted; weights in `back/data/qwen3_5_4b`, a link to MINDOLOGY's). Prompted with the skill list,
+  it writes the plan one command per line. Decoding is grammar-constrained (a trie over every valid line's tokens),
+  so every line is a sentence System 1 knows. Text only for now (it plans from the request, it doesn't look).
+  Needs `transformers`, `safetensors`, `flash-linear-attention` in the venv.
+- **The demo** (`ml/demo_humanoid.py`): request → plan → System 1 runs each line in one continuous scene until its
+  skill's pass test succeeds → a `.simrec` with captions. "pick up the red box put it on the blue destination" plans
+  to `pick up the red box` / `put the red box on the blue pad`.
+
+## The course (`robot/warehouse.py`; each stage unlocks the next when it passes)
+
+| stage | command | passes when (test episodes) |
+|---|---|---|
+| 1. walk | `walk forward +1.00 left +0.00 turn +0.00` | ≥ 90 % cover 10 m in 12 s, action 2nd difference rms < 0.05 |
+| 2. pick | `pick up the red box` | ≥ 80 % lift it ≥ 0.3 m off the floor in both hands and hold it 2 s |
+| 3. track | `run a lap` | ≥ 90 % finish a lap of the walled track at ≥ 1 m/s without touching a wall |
+| 4. carry | `run a lap with the red box` (starts holding it) | ≥ 80 % the same at ≥ 0.7 m/s, box never dropped |
+| 5. deliver | `put the red box on the blue pad` (any pad; half start holding the box) | ≥ 80 % box resting on the pad, let go |
+| 6. sort | `sort the boxes by color` | ≥ 80 % all 4 boxes on their own color's pads |
+
+- A quarter of every stage's episodes are tests: run on the policy's mean action (no exploration noise), left out of
+  the policy gradient, and only they count toward the pass rate. The newest unlocked stage gets half the episodes,
+  the earlier ones share the rest.
+- Smoothness: a training loss on the policy's mean action (CAPS: each step's mean pulled toward the average of its
+  neighbors' in the same episode), not a reward penalty. Penalties on action changes charge the exploration noise
+  too: at full weight they zeroed the clipped reward, ramped in they made the policy shrink its noise (std 0.8 → 0.6)
+  until it stopped exploring and only learned to stand.
+- Walk command curriculum (legged_gym): the top forward command starts at 0.5 m/s and rises 0.25 m/s whenever the
+  speed error (EMA) is under 0.25 m/s, at most every 20 iterations, up to 1.5. From a 1.5 m/s top, standing still
+  scores nearly as well as trying, and a fresh policy only learned to stand.
+- PPO: KL target 0.02, entropy 0.002, 8 minibatches (the settings the first walk run learned with; KL 0.01 and
+  entropy 0.01 stalled: half the step size, and the noise kept growing).
+- Gait clock frequency rises with speed (1.25 Hz standing, 2 Hz at 1.5 m/s; commanded speed in walk, actual speed
+  elsewhere). Forward commands go to 1.5 m/s.
+- Falls: any part but the feet and hands on the ground, or the pelvis below / tipped past its stage's limits:
+  0.35 m / 1 rad for walk, track, carry; 0.2 m / 1.4 rad for the box stages (a floor pick squats to 0.35 m, pelvis
+  pitched 60°). With 0.2 m everywhere, a fresh walking policy learned to sag into a squat until its hips hit the floor.
+- Grasp, checked before training: the hands collide as their rubber-hand meshes' bounding boxes (palm side 1 cm past
+  the wrist capsule; a thinner palm plate let the wrist hit the box first and lever the palm off). A search through
+  the model's kinematics found a floor grasp of the 0.25 x 0.25 x 0.3 m box collision-free with feet flat and the
+  center of mass over the feet; in sim (pelvis held), palms commanded 3 cm into a 1.5 kg box hold it at 25-30 N.
+  Open loop the G1 can't even stand (it tips 20° in 1 s): balance is the policy's job.
+- Destination pads are 0.8 m colored squares (no collision). The track is a loop corridor (1.4-2.2 m wide per side,
+  drawn per episode) around a central island, corners cut at 45°.

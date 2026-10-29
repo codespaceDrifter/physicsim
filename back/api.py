@@ -4,24 +4,25 @@
 #   GET  /scenes/{name}               scene JSON from scenes/{name}.json
 #   PUT  /scenes/{name}               save scene JSON
 #   GET  /prefabs/lekiwi              {"bodies", "joints", "cameras"} of a LeKiwi at the origin
-#   GET  /recordings                  {"recordings": [name]}
-#   GET  /recordings/{name}/scene     scene the recording was made from
-#   GET  /recordings/{name}/{chunk}   binary chunk (format in recording.py)
+#   GET  /meshes/{path}               a visual mesh (robot/assets/{path}, binary STL) as uint32 V, uint32 T, then
+#                                     V x 3 float32 vertices, T x 3 uint32 triangles (recording.py load_stl)
+#   GET  /recordings                  {"recordings": [name]} every logs/{name}.simrec
+#   GET  /recordings/{name}           the recording file (format in recording.py)
 #   GET  /games                       {"games": [name]} recordings that are pre-recorded games (record_games.py)
-#   GET  /recordings/{name}/game      a game's game.json (drivers, camera ids, score over time)
-#   GET  /recordings/{name}/cameras   a game's camera mosaic video (cameras.mp4)
+#   GET  /recordings/{name}/cameras   a game's camera mosaic video (logs/{name}.mp4)
 #   WS   /ws                          live simulation (protocol in live.py / documentation.md)
 import asyncio
 import json
 import re
+import struct
 import time
 from pathlib import Path
 import torch
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from recording import LOGS_DIR
+from recording import LOGS_DIR, ASSETS_DIR, load_stl
 from robot.lekiwi import lekiwi
 from live import LiveSession, CAMERA_EVERY
 
@@ -67,48 +68,43 @@ def prefab_lekiwi():
     return lekiwi()
 
 
+@app.get('/meshes/{path:path}')
+def get_mesh(path: str):
+    full = (ASSETS_DIR / path).resolve()
+    if not full.is_relative_to(ASSETS_DIR.resolve()) or full.suffix.lower() != '.stl' or not full.exists():
+        raise HTTPException(404, f'no mesh {path}')
+    vertices, triangles = load_stl(full)
+    return Response(struct.pack('<II', len(vertices), len(triangles)) + vertices.astype('<f4').tobytes() + triangles.astype('<u4').tobytes(),
+                    media_type='application/octet-stream')
+
+
 @app.get('/recordings')
 def list_recordings():
-    names = sorted(d.name for d in LOGS_DIR.iterdir() if (d / 'scene.json').exists()) if LOGS_DIR.exists() else []
+    names = sorted(p.stem for p in LOGS_DIR.glob('*.simrec')) if LOGS_DIR.exists() else []
     return {'recordings': names}
-
-
-@app.get('/recordings/{name}/scene')
-def recording_scene(name: str):
-    path = LOGS_DIR / safe_name(name) / 'scene.json'
-    if not path.exists():
-        raise HTTPException(404, f'no recording {name}')
-    return FileResponse(path, media_type='application/json')
 
 
 @app.get('/games')
 def list_games():
-    names = sorted(d.name for d in LOGS_DIR.iterdir() if (d / 'game.json').exists()) if LOGS_DIR.exists() else []
+    # pre-recorded games: recordings with their robots' camera video next to them (record_games.py)
+    names = sorted(p.stem for p in LOGS_DIR.glob('*.simrec') if p.with_suffix('.mp4').exists()) if LOGS_DIR.exists() else []
     return {'games': names}
 
 
-@app.get('/recordings/{name}/game')
-def recording_game(name: str):
-    path = LOGS_DIR / safe_name(name) / 'game.json'
+@app.get('/recordings/{name}')
+def recording(name: str):
+    path = LOGS_DIR / f'{safe_name(name)}.simrec'
     if not path.exists():
-        raise HTTPException(404, f'{name} is not a game')
-    return FileResponse(path, media_type='application/json')
+        raise HTTPException(404, f'no recording {name}')
+    return FileResponse(path, media_type='application/octet-stream')
 
 
 @app.get('/recordings/{name}/cameras')
 def recording_cameras(name: str):
-    path = LOGS_DIR / safe_name(name) / 'cameras.mp4'
+    path = LOGS_DIR / f'{safe_name(name)}.mp4'
     if not path.exists():
         raise HTTPException(404, f'{name} has no camera video')
     return FileResponse(path, media_type='video/mp4')
-
-
-@app.get('/recordings/{name}/{chunk}')
-def recording_chunk(name: str, chunk: int):
-    path = LOGS_DIR / safe_name(name) / f'{chunk}.bin'
-    if not path.exists():
-        raise HTTPException(404, f'no chunk {chunk} in {name}')
-    return FileResponse(path, media_type='application/octet-stream')
 
 
 @app.get('/health')

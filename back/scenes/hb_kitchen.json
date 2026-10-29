@@ -1,0 +1,8423 @@
+{
+ "name": "hb_kitchen",
+ "settings": {
+  "dt": 0.002,
+  "substeps": 1,
+  "gravity": [
+   0.0,
+   -9.81,
+   0.0
+  ],
+  "G": 0.0,
+  "max_contacts": 128
+ },
+ "bodies": [
+  {
+   "id": "geom0",
+   "shapes": [
+    {
+     "type": "plane",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "rotation": [
+    1.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom1",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    7.746823939669412e-06,
+    0.6827973127365112,
+    0.6000163555145264
+   ],
+   "rotation": [
+    0.15280558168888092,
+    -0.1533486396074295,
+    -0.6890995502471924,
+    -0.6915753483772278
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/pelvis_57bcbe00.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom3",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    3.835067730051378e-07,
+    0.6623449921607971,
+    0.6000028252601624
+   ],
+   "rotation": [
+    0.5372419357299805,
+    -5.971597056486644e-05,
+    0.8434281945228577,
+    -5.413444523583166e-05
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/pelvis_contour_link_d2eabe2f.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom4",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.104158416390419,
+    0.6466857194900513,
+    0.6476969718933105
+   ],
+   "rotation": [
+    0.5072863698005676,
+    0.26035523414611816,
+    0.8168414235115051,
+    -0.08743991702795029
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_hip_pitch_link_bf85ab39.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom6",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1275896430015564,
+    0.5946736335754395,
+    0.6002665162086487
+   ],
+   "rotation": [
+    0.37970808148384094,
+    -0.3725869059562683,
+    0.5910258889198303,
+    0.6063737869262695
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_hip_roll_link_c687e4c9.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom8",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.12990562617778778,
+    0.41587141156196594,
+    0.5887554287910461
+   ],
+   "rotation": [
+    0.19330722093582153,
+    -0.1490698605775833,
+    -0.7345098257064819,
+    -0.6331712007522583
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_hip_yaw_link_7732008c.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom10",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.12733304500579834,
+    0.23125571012496948,
+    0.6102883815765381
+   ],
+   "rotation": [
+    0.13374145328998566,
+    -0.05475696921348572,
+    -0.7663372755050659,
+    -0.6259729266166687
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_knee_link_590eea16.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom12",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.10508380830287933,
+    0.0393085777759552,
+    0.6535550355911255
+   ],
+   "rotation": [
+    0.19098587334156036,
+    -0.10206662863492966,
+    -0.8609668016433716,
+    -0.4602639973163605
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_ankle_pitch_link_0463393b.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom14",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.11683743447065353,
+    0.014605333097279072,
+    0.6284683346748352
+   ],
+   "rotation": [
+    0.12879899144172668,
+    -0.6840224862098694,
+    -0.6957650184631348,
+    0.17729952931404114
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_ankle_roll_link_1f6e41bb.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom19",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.10347224026918411,
+    0.646686315536499,
+    0.5508314371109009
+   ],
+   "rotation": [
+    0.5257787704467773,
+    0.030851315706968307,
+    0.8050750494003296,
+    0.27287188172340393
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_hip_pitch_link_a720d440.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom21",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.08218054473400116,
+    0.5946728587150574,
+    0.5024018287658691
+   ],
+   "rotation": [
+    0.3918357193470001,
+    -0.37493881583213806,
+    0.5940803289413452,
+    0.5940995216369629
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_hip_roll_link_a8271ddc.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom23",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.07485009729862213,
+    0.4158669710159302,
+    0.4932308793067932
+   ],
+   "rotation": [
+    0.135409876704216,
+    -0.13269636034965515,
+    -0.7473595142364502,
+    -0.6367963552474976
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_hip_yaw_link_a1532bb6.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom25",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.08969013392925262,
+    0.2312554568052292,
+    0.5090348124504089
+   ],
+   "rotation": [
+    0.2028169333934784,
+    -0.21505902707576752,
+    -0.7510072588920593,
+    -0.5904261469841003
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_knee_link_545a1f12.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom27",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.1085536852478981,
+    0.03930290788412094,
+    0.5538824796676636
+   ],
+   "rotation": [
+    0.19092242419719696,
+    -0.10215238481760025,
+    -0.8609554767608643,
+    -0.4602925181388855
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_ankle_pitch_link_46a5c648.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom29",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.09654922783374786,
+    0.01442455593496561,
+    0.5280426740646362
+   ],
+   "rotation": [
+    0.12950563430786133,
+    -0.6850887537002563,
+    -0.694794237613678,
+    0.17647285759449005
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_ankle_roll_link_0ddea457.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom34",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0006627481780014932,
+    0.8977926969528198,
+    0.6015901565551758
+   ],
+   "rotation": [
+    0.38591641187667847,
+    -0.3741770386695862,
+    0.5925177335739136,
+    0.599985659122467
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/torso_link_f4a47f01.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom36",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0007421962218359113,
+    1.1626403331756592,
+    0.5985920429229736
+   ],
+   "rotation": [
+    0.3586789667606354,
+    -0.40059566497802734,
+    0.6094631552696228,
+    0.5826038122177124
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/head_link_16a89e8b.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom38",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0019217171939089894,
+    0.9924162030220032,
+    0.6042075753211975
+   ],
+   "rotation": [
+    0.18439897894859314,
+    -0.7015160322189331,
+    -0.6816588044166565,
+    0.0959872379899025
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/logo_link_f3db7211.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom40",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13118985295295715,
+    1.0260239839553833,
+    0.6678284406661987
+   ],
+   "rotation": [
+    0.5012906193733215,
+    -0.06435097008943558,
+    0.8330005407333374,
+    0.22511506080627441
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_shoulder_pitch_link_7c50f053.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom42",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.14094401895999908,
+    0.9970298409461975,
+    0.6724197864532471
+   ],
+   "rotation": [
+    0.11676269769668579,
+    -0.19111812114715576,
+    -0.6967659592628479,
+    -0.6814378499984741
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_shoulder_roll_link_c96167f5.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom44",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.14150933921337128,
+    0.8904900550842285,
+    0.6724804043769836
+   ],
+   "rotation": [
+    0.07323943078517914,
+    -0.028446689248085022,
+    -0.693856418132782,
+    -0.7158142328262329
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_shoulder_yaw_link_d5d69e56.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom46",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.17181511223316193,
+    0.8349153399467468,
+    0.6307022571563721
+   ],
+   "rotation": [
+    0.052349753677845,
+    0.00017020163068082184,
+    -0.9986287951469421,
+    -2.3397236873279326e-05
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_elbow_pitch_link_98e7f6c8.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom48",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.20885033905506134,
+    0.8354192972183228,
+    0.5375672578811646
+   ],
+   "rotation": [
+    0.19214388728141785,
+    0.6342912912368774,
+    -0.7379018068313599,
+    -0.12749986350536346
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_elbow_roll_link_d9612f1c.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom50",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2569718658924103,
+    0.833517849445343,
+    0.43235933780670166
+   ],
+   "rotation": [
+    0.15500347316265106,
+    0.6964594721794128,
+    -0.6893416047096252,
+    -0.12540461122989655
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_palm_link_f7384819.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom52",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2490754872560501,
+    0.8407074213027954,
+    0.4494580328464508
+   ],
+   "rotation": [
+    0.08580636233091354,
+    -0.19880011677742004,
+    -0.3885658085346222,
+    -0.8956184387207031
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_zero_link_c47e921e.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom53",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.24651046097278595,
+    0.8815905451774597,
+    0.4547422230243683
+   ],
+   "rotation": [
+    0.44463035464286804,
+    -0.3755611181259155,
+    0.5864715576171875,
+    0.563301682472229
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_one_link_860c17f7.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom55",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2471197247505188,
+    0.9152412414550781,
+    0.45404520630836487
+   ],
+   "rotation": [
+    0.4058963656425476,
+    -0.3477758467197418,
+    0.6014760732650757,
+    0.5937395095825195
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_two_link_73bdbcfe.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom57",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.3086564540863037,
+    0.8321440815925598,
+    0.3802450895309448
+   ],
+   "rotation": [
+    0.13658507168293,
+    0.7139942646026611,
+    -0.6670806407928467,
+    -0.16297264397144318
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_three_link_d439b34d.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom59",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.3224340081214905,
+    0.8338435888290405,
+    0.34822261333465576
+   ],
+   "rotation": [
+    0.19378717243671417,
+    0.6871472597122192,
+    -0.6842707991600037,
+    -0.14848779141902924
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_four_link_5fb41b2d.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom61",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.26524800062179565,
+    0.8321059346199036,
+    0.3599938154220581
+   ],
+   "rotation": [
+    0.13658507168293,
+    0.7139942646026611,
+    -0.6670806407928467,
+    -0.16297264397144318
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_five_link_d439b34d.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom63",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2790255546569824,
+    0.8338054418563843,
+    0.32797130942344666
+   ],
+   "rotation": [
+    0.19378717243671417,
+    0.6871472597122192,
+    -0.6842707991600037,
+    -0.14848779141902924
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/left_six_link_5fb41b2d.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom65",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.13626544177532196,
+    1.0260236263275146,
+    0.54305100440979
+   ],
+   "rotation": [
+    0.5430191159248352,
+    0.17659737169742584,
+    0.8064653873443604,
+    -0.15348348021507263
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_shoulder_pitch_link_fca28f40.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom67",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.1460510492324829,
+    0.9970277547836304,
+    0.538528561592102
+   ],
+   "rotation": [
+    0.18880251049995422,
+    -0.11492414027452469,
+    -0.6807934045791626,
+    -0.6983311772346497
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_shoulder_roll_link_507ba808.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom69",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.14646047353744507,
+    0.8904892802238464,
+    0.5381339192390442
+   ],
+   "rotation": [
+    0.2270396649837494,
+    -0.27692970633506775,
+    -0.6597225069999695,
+    -0.6607035398483276
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_shoulder_yaw_link_8e3ddf48.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom71",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.13391976058483124,
+    0.834915280342102,
+    0.48806869983673096
+   ],
+   "rotation": [
+    0.3747623860836029,
+    -0.0002690588589757681,
+    -0.9271208643913269,
+    8.754110604058951e-05
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_elbow_pitch_link_f088997a.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom73",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0863487496972084,
+    0.8354212641716003,
+    0.39984890818595886
+   ],
+   "rotation": [
+    0.1379779726266861,
+    -0.6282695531845093,
+    -0.750310480594635,
+    0.152556911110878
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_elbow_roll_link_6b96afc6.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom75",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.036647289991378784,
+    0.8335177898406982,
+    0.295377641916275
+   ],
+   "rotation": [
+    0.15118275582790375,
+    -0.6841232180595398,
+    -0.6901838779449463,
+    0.181012362241745
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_palm_link_caefc16a.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom77",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.04467640817165375,
+    0.8407073616981506,
+    0.3124143183231354
+   ],
+   "rotation": [
+    0.388407826423645,
+    0.8956867456436157,
+    0.08651908487081528,
+    -0.19849196076393127
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_zero_link_33bd73a9.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom78",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.047077495604753494,
+    0.8815905451774597,
+    0.31777504086494446
+   ],
+   "rotation": [
+    0.34349575638771057,
+    0.3516998887062073,
+    0.6508886218070984,
+    -0.5784996747970581
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_one_link_fabb7f15.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom80",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.04693479463458061,
+    0.9152412414550781,
+    0.3168603479862213
+   ],
+   "rotation": [
+    0.3734719157218933,
+    0.3910306990146637,
+    0.6221312284469604,
+    -0.5661858916282654
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_two_link_e3f954e4.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom82",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.02851632423698902,
+    0.8321428298950195,
+    0.22294431924819946
+   ],
+   "rotation": [
+    0.16309860348701477,
+    -0.6665103435516357,
+    -0.7145214676856995,
+    0.1364622563123703
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_three_link_28ca78bc.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom84",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.014277459122240543,
+    0.8338267803192139,
+    0.1911800354719162
+   ],
+   "rotation": [
+    0.11483661085367203,
+    -0.6871273517608643,
+    -0.7000623941421509,
+    0.15678395330905914
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_four_link_0b134011.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom86",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.01489213015884161,
+    0.8321046829223633,
+    0.24319560825824738
+   ],
+   "rotation": [
+    0.16309860348701477,
+    -0.6665103435516357,
+    -0.7145214676856995,
+    0.1364622563123703
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_five_link_28ca78bc.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom88",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.029130995273590088,
+    0.8337886333465576,
+    0.21143130958080292
+   ],
+   "rotation": [
+    0.11483661085367203,
+    -0.6871273517608643,
+    -0.7000623941421509,
+    0.15678395330905914
+   ],
+   "color": "#b2b2b2",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/right_six_link_0b134011.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#b2b2b2"
+    }
+   ]
+  },
+  {
+   "id": "geom90",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.04,
+      0.2,
+      0.06
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.4399999976158142,
+    2.0261130332946777,
+    -0.04999995604157448
+   ],
+   "rotation": [
+    0.0002816561027429998,
+    -0.7073882222175598,
+    -0.7068251371383667,
+    -0.00028143191593699157
+   ],
+   "color": "#e6e6e6",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom91",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.31532731652259827,
+    0.46190738677978516,
+    -0.4043756127357483
+   ],
+   "rotation": [
+    0.4012680649757385,
+    0.5818998217582703,
+    0.5846711993217468,
+    0.3981659412384033
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/cabinetbase_53896f20.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#758099"
+    }
+   ]
+  },
+  {
+   "id": "geom92",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8053295612335205,
+    0.9602261781692505,
+    -0.7097374796867371
+   ],
+   "rotation": [
+    0.7070695757865906,
+    0.0005236562574282289,
+    -0.0002824152179528028,
+    0.7071437835693359
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/countertop_41cfd318.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom93",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.926,
+      2.16,
+      0.06
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.9549999833106995,
+    0.949999988079071,
+    -0.24199999868869781
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom94",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8040000200271606,
+    0.9231102466583252,
+    -0.5779997110366821
+   ],
+   "rotation": [
+    0.7071067690849304,
+    0.0,
+    0.0,
+    0.7071067690849304
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/faucet_d5494dad.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom95",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.035,
+     "height": 0.1,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.800000011920929,
+    1.2400000095367432,
+    -0.8349999785423279
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom96",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.025,
+     "length": 0.16,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.800000011920929,
+    1.3300000429153442,
+    -0.8349999785423279
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom97",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.025,
+     "length": 0.22,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.800000011920929,
+    1.409999966621399,
+    -0.949999988079071
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom98",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.025,
+     "length": 0.4,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.800000011920929,
+    1.2100000381469727,
+    -1.0670000314712524
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom99",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.032,
+     "height": 0.14,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.800000011920929,
+    1.0800000429153442,
+    -1.0670000314712524
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom100",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.029,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.847000002861023,
+    1.090000033378601,
+    -1.0679999589920044
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom101",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.035,
+     "height": 0.026,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8899999856948853,
+    1.090000033378601,
+    -1.0679999589920044
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom102",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.01,
+     "length": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8899999856948853,
+    1.090000033378601,
+    -1.0099999904632568
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom103",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.56,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8090000152587891,
+    0.8700000047683716,
+    -0.054999999701976776
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom104",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.6100000143051147,
+    0.8700000047683716,
+    -0.08500000089406967
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom105",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    1.0080000162124634,
+    0.8700000047683716,
+    -0.08500000089406967
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom106",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.56,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.8090000152587891,
+    0.6399999856948853,
+    -0.054999999701976776
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom107",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.6100000143051147,
+    0.6399999856948853,
+    -0.08500000089406967
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom108",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    1.0080000162124634,
+    0.6399999856948853,
+    -0.08500000089406967
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom134",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.22499997913837433,
+    0.986030638217926,
+    -0.3388999402523041
+   ],
+   "rotation": [
+    0.6472286581993103,
+    0.28477194905281067,
+    0.28477194905281067,
+    0.6472286581993103
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/burnerplate_3ab33694.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom135",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.22199997305870056,
+    0.986030638217926,
+    -0.7798999547958374
+   ],
+   "rotation": [
+    0.6472286581993103,
+    0.28477194905281067,
+    0.28477194905281067,
+    0.6472286581993103
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/burnerplate_3ab33694.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom136",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.21900002658367157,
+    0.986030638217926,
+    -0.7798999547958374
+   ],
+   "rotation": [
+    0.6472286581993103,
+    0.28477194905281067,
+    0.28477194905281067,
+    0.6472286581993103
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/burnerplate_3ab33694.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom137",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.22100003063678741,
+    0.986030638217926,
+    -0.3388999402523041
+   ],
+   "rotation": [
+    0.6472286581993103,
+    0.28477194905281067,
+    0.28477194905281067,
+    0.6472286581993103
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/burnerplate_3ab33694.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom138",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.20000000298023224,
+    0.13339999318122864,
+    -0.09790000319480896
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom139",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.19900000095367432,
+    0.13339999318122864,
+    -0.09790000319480896
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom140",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.56,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0,
+    0.13339999318122864,
+    -0.06790000200271606
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom141",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.20000000298023224,
+    0.8133999705314636,
+    -0.09790000319480896
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom142",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.018,
+     "height": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.19900000095367432,
+    0.8133999705314636,
+    -0.09790000319480896
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom143",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.56,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.0,
+    0.8133999705314636,
+    -0.06790000200271606
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    -0.4998008906841278
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom144",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0020000007934868336,
+    0.9436749219894409,
+    -0.7260478138923645
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.00021850279881618917,
+    0.00021850279881618917,
+    0.7071067690849304
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/oventop_60343dbd.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom145",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.7,
+      0.032,
+      0.44
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.004000000189989805,
+    0.44839999079704285,
+    -0.13089999556541443
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom146",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.21799996495246887,
+    0.9711458683013916,
+    -0.7809000015258789
+   ],
+   "rotation": [
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/stoverim_5b2d7f65.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom147",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2250000387430191,
+    0.9711458683013916,
+    -0.33789998292922974
+   ],
+   "rotation": [
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/stoverim_5b2d7f65.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom148",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.22200003266334534,
+    0.9711458683013916,
+    -0.7809000015258789
+   ],
+   "rotation": [
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/stoverim_5b2d7f65.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom149",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.22199995815753937,
+    0.9711458683013916,
+    -0.33789998292922974
+   ],
+   "rotation": [
+    0.5,
+    0.5,
+    0.5,
+    0.5
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/stoverim_5b2d7f65.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom150",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      1.0,
+      0.032,
+      0.21
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0020000000949949026,
+    0.8133999705314636,
+    -0.13189999759197235
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom151",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      1.0,
+      0.032,
+      0.19
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0020000000949949026,
+    0.0934000015258789,
+    -0.13189999759197235
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom152",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      1.0,
+      0.032,
+      0.5
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0020000000949949026,
+    0.44839999079704285,
+    -0.13189999759197235
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom153",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      1.0,
+      1.204,
+      0.9
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.0020000000949949026,
+    0.45339998602867126,
+    -0.7529000043869019
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom161",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.028,
+      0.096,
+      0.036
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300000131130219,
+    1.5964303016662598,
+    -0.6399000287055969
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom162",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.05,
+     "height": 0.016,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300000131130219,
+    1.5964103937149048,
+    -0.664900004863739
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom163",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.014,
+     "height": 0.036,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300059735774994,
+    1.6444294452667236,
+    -0.6409382224082947
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom166",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.1,
+     "height": 0.02,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.22100000083446503,
+    0.9633998274803162,
+    -0.33889999985694885
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ff0000",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom167",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.028,
+      0.096,
+      0.036
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.25600001215934753,
+    1.5964303016662598,
+    -0.6399000287055969
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom168",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.05,
+     "height": 0.016,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.25600001215934753,
+    1.5964103937149048,
+    -0.664900004863739
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom169",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.014,
+     "height": 0.036,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2560006082057953,
+    1.6444294452667236,
+    -0.6409382224082947
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom172",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.1,
+     "height": 0.02,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.22499999403953552,
+    0.9633998274803162,
+    -0.33889999985694885
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ff0000",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom173",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.028,
+      0.096,
+      0.036
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300000131130219,
+    1.7104302644729614,
+    -0.6399000287055969
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom174",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.05,
+     "height": 0.016,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300000131130219,
+    1.7104103565216064,
+    -0.664900004863739
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom175",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.014,
+     "height": 0.036,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.13300059735774994,
+    1.7584294080734253,
+    -0.6409382224082947
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom178",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.1,
+     "height": 0.02,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.21899999678134918,
+    0.9633998274803162,
+    -0.7799000144004822
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ff0000",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom179",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.028,
+      0.096,
+      0.036
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.25600001215934753,
+    1.7104302644729614,
+    -0.6399000287055969
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom180",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.05,
+     "height": 0.016,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.25600001215934753,
+    1.7104103565216064,
+    -0.664900004863739
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom181",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.014,
+     "height": 0.036,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2560006082057953,
+    1.7584294080734253,
+    -0.6409382224082947
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    2.4996895664486374e-09,
+    6.278049568209099e-06
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom184",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.1,
+     "height": 0.02,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.22200000286102295,
+    0.9633998274803162,
+    -0.7799000144004822
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ff0000",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom185",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    1.0202102203038521e-06,
+    1.6648752689361572,
+    -0.9831962585449219
+   ],
+   "rotation": [
+    0.4948504567146301,
+    0.5050970315933228,
+    0.4948504567146301,
+    0.5050970315933228
+   ],
+   "color": "#262626",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/hood_c4d3ded4.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#262626"
+    }
+   ]
+  },
+  {
+   "id": "geom187",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.4000000059604645,
+    1.6499937772750854,
+    -0.6706250905990601
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.4998008906841278,
+    0.4998008906841278,
+    0.500199019908905
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/lightswitchbase_d55263c4.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom188",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.07,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.3747950494289398,
+    1.649999976158142,
+    -0.6307020783424377
+   ],
+   "rotation": [
+    0.0003902298922184855,
+    -0.9800583124160767,
+    -7.908677071100101e-05,
+    0.19870971143245697
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom190",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.8,
+      0.6,
+      0.03
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.012400000356137753,
+    1.5538051128387451,
+    -1.0379999876022339
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#1a1a1a",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom191",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      2.52,
+      0.14,
+      1.2
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1509999930858612,
+    1.5820000171661377,
+    -1.3940000534057617
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#a8b2cc",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom192",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      2.52,
+      0.16,
+      0.29
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1509999930858612,
+    1.1269999742507935,
+    -1.3940000534057617
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom195",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      2.158,
+      0.14,
+      1.2
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -1.4649649858474731,
+    1.5820000171661377,
+    -0.24804776906967163
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    0.4998008906841278
+   ],
+   "color": "#a8b2cc",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom196",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      2.158,
+      0.16,
+      0.29
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -1.4649649858474731,
+    1.1269999742507935,
+    -0.24804776906967163
+   ],
+   "rotation": [
+    0.500199019908905,
+    -0.500199019908905,
+    0.4998008906841278,
+    0.4998008906841278
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom199",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.446,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.07500000298023224,
+    1.7999999523162842,
+    -1.0499999523162842
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom200",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.452,
+      0.6,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.5239999890327454,
+    1.9800000190734863,
+    -1.0499999523162842
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom201",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.446,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.07500000298023224,
+    2.1600000858306885,
+    -1.0499999523162842
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom202",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.044,
+      0.6,
+      0.32
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.12600000202655792,
+    1.9800000190734863,
+    -1.0499999523162842
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom203",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.42,
+      0.048,
+      0.32
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.10000000149011612,
+    1.9800000190734863,
+    -1.3259999752044678
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom209",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1080000028014183,
+    1.8660000562667847,
+    -0.6700000166893005
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom210",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1080000028014183,
+    2.0940001010894775,
+    -0.6700000166893005
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom211",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.318,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1080000028014183,
+    1.9800000190734863,
+    -0.6069999933242798
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom212",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.45,
+      0.06,
+      0.39
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    0.07500000298023224,
+    1.9800000190734863,
+    -0.7099999785423279
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom217",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.08,
+      0.6,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6039999723434448,
+    1.9800000190734863,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom218",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.04,
+      0.6,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2240000069141388,
+    1.9800000190734863,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom219",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.04,
+      0.6,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.984000027179718,
+    1.9800000190734863,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom220",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8040000200271606,
+    2.1600000858306885,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom221",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8040000200271606,
+    1.7999999523162842,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom222",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.40400001406669617,
+    1.7999999523162842,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom223",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.6,
+      0.04
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.40400001406669617,
+    2.1600000858306885,
+    -1.0299999713897705
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom224",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.04,
+      0.32
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8040000200271606,
+    1.9800000190734863,
+    -1.309999942779541
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom225",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.32,
+      0.04,
+      0.32
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.40400001406669617,
+    1.9800000190734863,
+    -1.309999942779541
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom235",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.32,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6819999814033508,
+    1.9800000190734863,
+    -0.5820000171661377
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom236",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6819999814033508,
+    2.0940001010894775,
+    -0.6489999890327454
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom237",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6819999814033508,
+    1.8660000562667847,
+    -0.6489999890327454
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom238",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.386,
+      0.06,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.800000011920929,
+    1.9800000190734863,
+    -0.6949999928474426
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom243",
+   "shapes": [
+    {
+     "type": "box",
+     "size": [
+      0.386,
+      0.06,
+      0.4
+     ],
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.4090000092983246,
+    1.9800000190734863,
+    -0.6949999928474426
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#758099",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom244",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.022,
+     "height": 0.32,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.5260000228881836,
+    1.9800000190734863,
+    -0.5820000171661377
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom245",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.5260000228881836,
+    1.8660000562667847,
+    -0.6489999890327454
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom246",
+   "shapes": [
+    {
+     "type": "cylinder",
+     "radius": 0.019,
+     "height": 0.106,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.5260000228881836,
+    2.0940001010894775,
+    -0.6489999890327454
+   ],
+   "rotation": [
+    0.9999999403953552,
+    -0.0003981633926741779,
+    0.0,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom251",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8530092239379883,
+    1.1815630197525024,
+    -0.7403252124786377
+   ],
+   "rotation": [
+    0.47071772813796997,
+    0.5282109975814819,
+    0.5251014828681946,
+    0.4729549288749695
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/micro_64b88133.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom252",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.5514559745788574,
+    1.0320045948028564,
+    -0.573708176612854
+   ],
+   "rotation": [
+    0.6134313344955444,
+    0.0,
+    0.7897480726242065,
+    0.0
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/microbutton_ea238872.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom253",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8534790873527527,
+    0.9957302808761597,
+    -0.7449262142181396
+   ],
+   "rotation": [
+    0.43376147747039795,
+    0.5584362149238586,
+    0.5584362149238586,
+    0.43376147747039795
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/microfeet_6bfd8efc.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#ffffff"
+    }
+   ]
+  },
+  {
+   "id": "geom260",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8837971687316895,
+    1.1816309690475464,
+    -0.5091611742973328
+   ],
+   "rotation": [
+    0.6134313344955444,
+    0.0,
+    0.7897480726242065,
+    0.0
+   ],
+   "color": "#333333",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/microdoor_7b953922.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#333333"
+    }
+   ]
+  },
+  {
+   "id": "geom261",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.8837209939956665,
+    1.1816309690475464,
+    -0.5088626742362976
+   ],
+   "rotation": [
+    0.6134313344955444,
+    0.0,
+    0.7897480726242065,
+    0.0
+   ],
+   "color": "#666666",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/microwindow_21b0723a.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#666666"
+    }
+   ]
+  },
+  {
+   "id": "geom262",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.26,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6537786722183228,
+    1.1820000410079956,
+    -0.48199138045310974
+   ],
+   "rotation": [
+    0.7015897035598755,
+    -0.7015897035598755,
+    0.08815834671258926,
+    0.08815834671258926
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom263",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6619430184364319,
+    1.312000036239624,
+    -0.5139654874801636
+   ],
+   "rotation": [
+    0.992197573184967,
+    -0.0003950567916035652,
+    0.1246747225522995,
+    4.964091567671858e-05
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom264",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.06,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.6619430184364319,
+    1.0520000457763672,
+    -0.5139654874801636
+   ],
+   "rotation": [
+    0.992197573184967,
+    -0.0003950567916035652,
+    0.1246747225522995,
+    4.964091567671858e-05
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom269",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.01,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.27522143721580505,
+    1.0435963869094849,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.5046992301940918,
+    0.5046992301940918,
+    0.4952561855316162,
+    0.4952561855316162
+   ],
+   "color": "#e6e6e6",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0,
+   "visuals": [
+    {
+     "mesh": "mujoco/kettle_e1fb76ab.stl",
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "color": "#e6e6e6"
+    }
+   ]
+  },
+  {
+   "id": "geom270",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.032,
+     "length": 0.2,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2690182030200958,
+    1.253000020980835,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.5002166032791138,
+    -0.5002166032791138,
+    0.4997832775115967,
+    -0.4997832775115967
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom271",
+   "shapes": [
+    {
+     "type": "sphere",
+     "radius": 0.011,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.26900914311408997,
+    1.1239999532699585,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.5002166032791138,
+    -0.5002166032791138,
+    0.4997832775115967,
+    -0.4997832775115967
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom272",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.23,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.2690182030200958,
+    1.253000020980835,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.5002166032791138,
+    -0.5002166032791138,
+    0.4997832775115967,
+    -0.4997832775115967
+   ],
+   "color": "#e6e6e6",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom273",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.14,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.1770130842924118,
+    1.180006504058838,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    -2.4862722057150677e-05,
+    2.4862722057150677e-05
+   ],
+   "color": "#e6e6e6",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom274",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.02,
+     "length": 0.14,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.3610129952430725,
+    1.178993582725525,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    -2.4862722057150677e-05,
+    2.4862722057150677e-05
+   ],
+   "color": "#e6e6e6",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom275",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.022,
+     "length": 0.03,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.3610154688358307,
+    1.2139935493469238,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    -2.4862722057150677e-05,
+    2.4862722057150677e-05
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  },
+  {
+   "id": "geom276",
+   "shapes": [
+    {
+     "type": "capsule",
+     "radius": 0.022,
+     "length": 0.03,
+     "position": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0.7071067811865476,
+      0.7071067811865475,
+      0.0,
+      0.0
+     ]
+    }
+   ],
+   "position": [
+    -0.17701546847820282,
+    1.2140064239501953,
+    -0.3499999940395355
+   ],
+   "rotation": [
+    0.7071067690849304,
+    -0.7071067690849304,
+    -2.4862722057150677e-05,
+    2.4862722057150677e-05
+   ],
+   "color": "#ffffff",
+   "velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "angular_velocity": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "density": 1000.0,
+   "static": true,
+   "collide": true,
+   "group": 0,
+   "friction": 1.0,
+   "restitution": 0.0
+  }
+ ],
+ "joints": [],
+ "cameras": []
+}

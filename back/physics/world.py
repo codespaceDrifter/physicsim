@@ -6,13 +6,45 @@
 #   then restitution, and keep the accumulated impulses to warm start the next step.
 import math
 import torch
-from physics.math3d import quat_mul, quat_from_rotvec, quat_to_matrix
+from physics.math3d import quat_mul, quat_rotate, quat_from_rotvec, quat_to_matrix
 from physics.joints import Joints
 from physics.contacts import Contacts
 
 # shape type codes, ordered so that contact pairs are always (lower code, higher code)
-PLANE, SPHERE, BOX, CYLINDER = 0, 1, 2, 3
-SHAPE_CODES = {'plane': PLANE, 'sphere': SPHERE, 'box': BOX, 'cylinder': CYLINDER}
+PLANE, SPHERE, BOX, CYLINDER, CAPSULE = 0, 1, 2, 3, 4
+SHAPE_CODES = {'plane': PLANE, 'sphere': SPHERE, 'box': BOX, 'cylinder': CYLINDER, 'capsule': CAPSULE}
+
+
+def shape_mass(s, density):
+    # mass and principal inertia [Ixx, Iyy, Izz] (shape frame, about its center) of a uniform shape
+    if s['type'] == 'box':
+        x, y, z = s['size']
+        m = x * y * z * density
+        return m, [m * (y * y + z * z) / 12, m * (x * x + z * z) / 12, m * (x * x + y * y) / 12]
+    if s['type'] == 'sphere':
+        m = 4 / 3 * math.pi * s['radius'] ** 3 * density
+        return m, [0.4 * m * s['radius'] ** 2] * 3
+    if s['type'] == 'cylinder':
+        r, hgt = s['radius'], s['height']
+        m = math.pi * r * r * hgt * density
+        return m, [m * (3 * r * r + hgt * hgt) / 12, 0.5 * m * r * r, m * (3 * r * r + hgt * hgt) / 12]
+    if s['type'] == 'capsule':
+        # cylinder of length L plus two hemispheres whose centers of mass sit 3r/8 beyond its ends
+        r, L = s['radius'], s['length']
+        mc = math.pi * r * r * L * density
+        ms = 4 / 3 * math.pi * r ** 3 * density
+        side = mc * (L * L / 12 + r * r / 4) + ms * (2 * r * r / 5 + L * L / 4 + 3 * L * r / 8)
+        return mc + ms, [side, mc * r * r / 2 + ms * 2 * r * r / 5, side]
+    assert s['type'] == 'plane', f"unknown shape type {s['type']}"
+    return 0.0, [0.0, 0.0, 0.0]
+
+
+def quat_matrix_py(q):
+    # python [w, x, y, z] -> 3x3 rotation matrix (rows), for build-time mass properties
+    w, x, y, z = q
+    return [[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
+            [2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x)],
+            [2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y)]]
 
 
 def soft_params(hertz, damping_ratio, h):
@@ -48,42 +80,56 @@ class World:
         # {"ground": 0, ...}
         self.body_index = {bid: i for i, bid in enumerate(self.body_ids)}
 
-        # (N,) shape type code per body
-        self.shape_type = torch.tensor([SHAPE_CODES[b['shape']['type']] for b in bodies], device=device)
-        # (N, 3) box half extents (zeros for other shapes)
-        self.half = torch.tensor([[s / 2 for s in b['shape']['size']] if b['shape']['type'] == 'box' else [0., 0., 0.]
-                                  for b in bodies], device=device)
-        # (N,) sphere / cylinder radius (0 for other shapes)
-        self.radius = torch.tensor([b['shape'].get('radius', 0.0) for b in bodies], device=device)
-        # (N,) cylinder half height (0 for other shapes)
-        self.half_height = torch.tensor([b['shape']['height'] / 2 if b['shape']['type'] == 'cylinder' else 0.0
-                                         for b in bodies], device=device)
+        # geoms: every body carries one or more shapes ("shapes", each with a pose in the body frame, like MuJoCo geoms).
+        # collision and rendering work on geoms, dynamics on bodies. [(body index, shape dict)] in scene order
+        geoms = [(i, s) for i, b in enumerate(bodies) for s in b['shapes']]
+        for b in bodies:
+            assert len(b['shapes']) > 0 or 'mass' in b, f"body {b['id']} has neither shapes nor an explicit mass"
+            assert all(s['type'] != 'plane' for s in b['shapes']) or (b['static'] and len(b['shapes']) == 1), f"plane {b['id']} must be static and alone"
+        self.num_geoms = len(geoms)
+        # (G,) owning body, shape type code
+        self.geom_body = torch.tensor([i for i, s in geoms], device=device, dtype=torch.long)
+        self.geom_type = torch.tensor([SHAPE_CODES[s['type']] for i, s in geoms], device=device)
+        # (G, 3) box half extents (zeros for other shapes)
+        self.half = torch.tensor([[v / 2 for v in s['size']] if s['type'] == 'box' else [0., 0., 0.] for i, s in geoms], device=device)
+        # (G,) sphere / cylinder / capsule radius (0 for other shapes)
+        self.radius = torch.tensor([s.get('radius', 0.0) for i, s in geoms], device=device)
+        # (G,) half height along local y: cylinder height / 2, capsule length / 2 (between its two cap centers)
+        self.half_height = torch.tensor([s['height'] / 2 if s['type'] == 'cylinder' else s['length'] / 2 if s['type'] == 'capsule' else 0.0
+                                         for i, s in geoms], device=device)
+        # (G, 3), (G, 4) shape pose in its body's frame
+        self.geom_local_pos = torch.tensor([s['position'] for i, s in geoms], device=device, dtype=torch.float32)
+        self.geom_local_quat = torch.tensor([s['rotation'] for i, s in geoms], device=device, dtype=torch.float32)
         # [bool] python copy for build-time logic, (N,) tensor for the solver
         self.scene_static = [b['static'] for b in bodies]
         self.static = torch.tensor(self.scene_static, device=device)
-        for b in bodies:
-            assert b['shape']['type'] != 'plane' or b['static'], f"plane {b['id']} must be static"
 
-        # mass properties. inertia is diagonal in the body frame for all our primitives.
+        # mass properties. the body frame is the center of mass with principal axes, so inertia is diagonal:
+        #   explicit "mass" + "inertia" [Ixx, Iyy, Izz] (imported robots, whose links aren't their collision shapes)
+        #   or "density": summed over the shapes, which must then balance around the body origin
         masses = []  # [float]
         inertias = []  # [[Ixx, Iyy, Izz]]
         for b in bodies:
-            s = b['shape']
-            if s['type'] == 'box':
-                x, y, z = s['size']
-                m = x * y * z * b['density']
-                I = [m * (y * y + z * z) / 12, m * (x * x + z * z) / 12, m * (x * x + y * y) / 12]
-            elif s['type'] == 'sphere':
-                m = 4 / 3 * math.pi * s['radius'] ** 3 * b['density']
-                I = [0.4 * m * s['radius'] ** 2] * 3
-            elif s['type'] == 'cylinder':
-                r, hgt = s['radius'], s['height']
-                m = math.pi * r * r * hgt * b['density']
-                I = [m * (3 * r * r + hgt * hgt) / 12, 0.5 * m * r * r, m * (3 * r * r + hgt * hgt) / 12]
-            else:
-                m, I = 0.0, [0.0, 0.0, 0.0]
-            masses.append(m)
-            inertias.append(I)
+            if 'mass' in b:
+                masses.append(b['mass'])
+                inertias.append(b['inertia'])
+                continue
+            m_tot, com, I_tot = 0.0, [0.0, 0.0, 0.0], [[0.0] * 3 for _ in range(3)]
+            for s in b['shapes']:
+                m, I = shape_mass(s, b['density'])
+                R = quat_matrix_py(s['rotation'])
+                p = s['position']
+                # rotate the principal inertia into the body frame, then shift it to the body origin (parallel axis)
+                for r in range(3):
+                    for c in range(3):
+                        I_tot[r][c] += sum(R[r][k] * I[k] * R[c][k] for k in range(3)) + m * ((sum(v * v for v in p) if r == c else 0.0) - p[r] * p[c])
+                m_tot += m
+                com = [com[k] + m * p[k] for k in range(3)]
+            assert b['static'] or all(abs(v) < 1e-6 * max(m_tot, 1e-9) for v in com), f"shapes of {b['id']} aren't centered on its origin: give it mass + inertia"
+            assert b['static'] or all(abs(I_tot[r][c]) <= 1e-6 * max(I_tot[0][0] + I_tot[1][1] + I_tot[2][2], 1e-12) for r in range(3) for c in range(3) if r != c), \
+                f"inertia of {b['id']} isn't diagonal in its frame: give it mass + inertia"
+            masses.append(m_tot)
+            inertias.append([I_tot[0][0], I_tot[1][1], I_tot[2][2]])
         # (N,) mass (0 for static, which is never used: static bodies use inv_mass 0)
         self.mass = torch.tensor(masses, device=device)
         # (N,) 1/m, 0 for static bodies
@@ -121,11 +167,19 @@ class World:
         self.joint_iterations = 1
         # jacobi contact passes per solve/relax. mass splitting converges slower than gauss-seidel, so it gets a few.
         self.contact_iterations = 2
+        # derived joint and contact quantities (joint angles, contact buffer) valid before the first step
+        self.joints.prepare()
+        self.contacts.detect()
 
     def compute_inv_inertia_world(self):
         # I⁻¹_world = R diag(I⁻¹_body) Rᵀ. (E, N, 3, 3)
         R = quat_to_matrix(self.quat)
         return ((R * self.inv_inertia.unsqueeze(-2)).unsqueeze(-1) * R.transpose(-1, -2).unsqueeze(-3)).sum(-2)
+
+    def geom_poses(self, pos, quat):
+        # world pose of every geom from body poses pos (E, N, 3), quat (E, N, 4) -> (E, G, 3), (E, G, 4)
+        q = quat[:, self.geom_body]
+        return pos[:, self.geom_body] + quat_rotate(q, self.geom_local_pos), quat_mul(q, self.geom_local_quat)
 
     def inv_mass_jt(self, idx, J):
         # W = M⁻¹ Jᵀ for constraint rows J (E, K, R, 6) acting on bodies idx (K,) -> (E, K, 6, R).

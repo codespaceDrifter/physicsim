@@ -87,10 +87,14 @@ def quat_from_two_axes(x_axis):
 
 def spd_inverse(A):
     # inverse of symmetric positive definite matrices (..., n, n) by Cholesky: A = L Lᵀ -> A⁻¹ = L⁻ᵀ L⁻¹.
-    # unlike torch.linalg.inv this can be recorded in a CUDA graph
+    # unlike torch.linalg.inv this can be recorded in a CUDA graph. factorized in float64: mechanisms with light links
+    # (a humanoid's 74 g ankle link between two heavy ones) give condition numbers float32 Cholesky can't handle
+    A = A.double()
+    # exactly symmetric (float32 products leave tiny asymmetries Cholesky would read from one triangle only)
+    A = (A + A.transpose(-1, -2)) / 2
     L = torch.linalg.cholesky_ex(A)[0]
-    L_inv = torch.linalg.solve_triangular(L, torch.eye(A.shape[-1], device=A.device).expand_as(A), upper=False)
-    return L_inv.transpose(-1, -2) @ L_inv
+    L_inv = torch.linalg.solve_triangular(L, torch.eye(A.shape[-1], device=A.device, dtype=A.dtype).expand_as(A), upper=False)
+    return (L_inv.transpose(-1, -2) @ L_inv).float()
 
 
 def wrap_angle(a):

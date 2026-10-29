@@ -5,6 +5,8 @@ export const app = {
   scene: null,
   // scene JSON currently displayed: app.scene in edit/simulate, the recording's scene in playback
   shown: null,
+  // visual meshes bodies can show instead of their collision shapes ("visuals"), from recordings and /meshes
+  meshes: {}, // {mesh name: {vertices: Float32Array, indices: Uint32Array}}
   // 'edit' | 'simulate' | 'playback'
   mode: 'edit',
   // 'simple' (pick a course + who drives, press play) | 'advanced' (the full editor)

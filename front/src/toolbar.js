@@ -1,6 +1,6 @@
 // Top toolbar + viewport view buttons: scene load/new/save, edit actions, mode switch, sim controls.
 import { app, on, emit, setMode } from './state.js';
-import { getJson, putJson } from './api.js';
+import { getJson, putJson, getBinary } from './api.js';
 import { newScene } from './model.js';
 import { toast } from './toast.js';
 import { setStandardView, setOrthographic } from './viewport.js';
@@ -34,7 +34,16 @@ export function setScene(scene) {
 }
 
 export async function loadScene(name) {
-  setScene(await getJson(`/scenes/${encodeURIComponent(name)}`));
+  const scene = await getJson(`/scenes/${encodeURIComponent(name)}`);
+  // the visual meshes its bodies show (imported robots, HumanoidBench scenes), fetched once: /meshes answers
+  // uint32 V, uint32 T, V x 3 float32 vertices, T x 3 uint32 triangles
+  const names = new Set(scene.bodies.flatMap(b => (b.visuals ?? []).map(v => v.mesh)));
+  await Promise.all([...names].filter(n => !(n in app.meshes)).map(async (n) => {
+    const buffer = await getBinary(`/meshes/${n}`);
+    const [v, t] = new Uint32Array(buffer, 0, 2);
+    app.meshes[n] = { vertices: new Float32Array(buffer, 8, v * 3), indices: new Uint32Array(buffer, 8 + v * 12, t * 3) };
+  }));
+  setScene(scene);
   sceneSelect.value = name;
 }
 

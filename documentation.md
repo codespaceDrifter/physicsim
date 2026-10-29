@@ -8,14 +8,19 @@ back/                      python, run everything from here as modules:  cd back
   physics/                 the engine
     math3d.py              batched quaternion / vector math, SPD inverse
     world.py               World: bodies, integration, the step loop, CUDA graphs
-    joints.py              revolute / prismatic / fixed joints, motors, limits (one global solve)
+    joints.py              revolute / prismatic / fixed joints, motors, limits (one exact solve per articulation)
     contacts.py            contact solving: non-penetration, friction (incl. omni wheels), restitution
-    collision.py           narrowphase: plane / sphere / box / cylinder pairs
+    collision.py           narrowphase: plane / sphere / box / cylinder / capsule pairs
     render.py              camera pixels by batched ray casting
   robot/
     lekiwi.py              the LeKiwi model (omni base + SO-101 arm, cameras)
     env.py                 base for batched LeKiwi tasks (robots, actions, pixels, proprio)
     course.py              the course: one arena, five stages (drive, pick, bring, race, speedrun)
+    mjcf.py                MuJoCo MJCF importer (bodies, hinges + armature, defaults, collision geoms, actuators)
+    g1.py                  the Unitree G1 humanoid (imported from MuJoCo Menagerie), built in any pose
+    humanoid.py            base for G1 courses: robots, stages, walking, locomotion rewards, camera, observations
+    warehouse.py           the humanoid course: walk, pick, bring, speedrun with boxes (Part 9)
+    assets/unitree_g1/     g1_mjx.xml + its BSD-3 license
   ml/                      the learning pipeline (plan and reasoning: ../DOC.md)
     expert.py              scripted expert that reads true simulator state (baseline, editor autopilot)
     teacher.py             teacher: MLP actor + critic on privileged state
@@ -26,9 +31,12 @@ back/                      python, run everything from here as modules:  cd back
     distill.py             teacher -> VLA: behavior cloning, then DAgger rounds
     train_grpo.py          GRPO fine-tune of the VLA on episode outcomes
     eval.py                the results table: every model on every stage
-  write_scenes.py          writes scenes/course_{n}_{stage}.json, one per course stage (course_1_drive ...)
-  recording.py             recording format (playback)
-  record_games.py          pre-recorded races for the web demo (default teacher vs teacher) (logs/game_{i}/)
+    humanoid_policy.py     the humanoid model: one transformer (proprio history + words + camera), state decoder, critic
+    train_humanoid.py      PPO on the warehouse course (asymmetric critic, state-decoder loss)
+    record_humanoid.py     record the humanoid on a stage (a .simrec file to watch in playback)
+  write_scenes.py          writes scenes/course_{n}_{stage}.json (course_1_drive ...) and scenes/warehouse.json
+  recording.py             the recording file format (.simrec: scene + meshes + frames, for playback)
+  record_games.py          pre-recorded races for the web demo (default teacher vs teacher) (logs/game_{i}.simrec + .mp4)
   live.py                  real-time simulation session for the editor
   api.py                   FastAPI server: scenes, prefabs, recordings, websocket
   scenes/                  scene JSON files the editor opens / saves
@@ -68,7 +76,8 @@ recordings. One format everywhere.
 ```json
 {
   "id": "lekiwi/wheel_left",
-  "shape": {"type": "cylinder", "radius": 0.0508, "height": 0.025, "omni": true},
+  "shapes": [{"type": "cylinder", "radius": 0.0508, "height": 0.025, "omni": true,
+              "position": [0, 0, 0], "rotation": [1, 0, 0, 0]}],
   "position": [0.05, 0.0508, -0.0866], "rotation": [w, x, y, z],
   "velocity": [0, 0, 0], "angular_velocity": [0, 0, 0],
   "density": 493, "static": false, "collide": true, "group": 1,
@@ -76,10 +85,14 @@ recordings. One format everywhere.
 }
 ```
 
-- shapes: `box` (`size` = full side lengths), `sphere` (`radius`), `cylinder` (`radius`, `height`, axis = local +y,
-  optional `"omni": true` for an omni wheel, Part 3), `plane` (infinite, normal = local +y, must be static).
-  MuJoCo and Bullet use exactly these primitives for robots because every pair has an exact, fast collision test.
-- mass = volume × density. The inertia of each primitive is diagonal in its own frame.
+- `shapes`: one or more (MuJoCo's geoms), each at a `position` / `rotation` in the body frame: `box` (`size` = full
+  side lengths), `sphere` (`radius`), `cylinder` (`radius`, `height`, axis = local +y, optional `"omni": true` for an
+  omni wheel, Part 3), `capsule` (`radius`, `length` between its two cap centers, axis = local +y), `plane` (infinite,
+  normal = local +y, must be static and alone). MuJoCo and Bullet use exactly these primitives for robots because
+  every pair has an exact, fast collision test. A body may have no shapes (a link that never touches anything).
+- the body frame is its center of mass with principal axes (inertia diagonal). mass = volume × `density`, summed over
+  the shapes (which must then balance around the origin), or explicit `"mass"` + `"inertia"` `[Ixx, Iyy, Izz]`
+  (imported robots, whose links aren't their collision shapes).
 - `static`: infinite mass, never moves. `collide: false`: visual only (target zones).
 - `group`: bodies that share a nonzero group never collide with each other (robot parts don't self-collide).
 - `friction` of a pair = `sqrt(fa · fb)`, `restitution` = `max(ra, rb)` (Box2D's mixing rules).
@@ -159,10 +172,14 @@ for each substep (h = dt / substeps):
 restitution         bounces (only if anything in the scene can bounce)
 ```
 
-### Joints: one exact global solve
+### Joints: one exact solve per articulation
 
-All locked rows and all motor rows of all joints are solved **together, in one linear solve** (Baraff 1996): a
-`6J × 6J` system (78 × 78 for LeKiwi), inverted per env by Cholesky every substep.
+All locked rows and all motor rows of a mechanism are solved **together, in one linear solve** (Baraff 1996): a
+`6J × 6J` system (78 × 78 for LeKiwi, 174 × 174 for the G1), factorized per env by Cholesky once per
+step. Separate robots share no rows, so the system is block diagonal: each articulation (bodies connected through
+joints) is its own block, batched over envs × articulations. Two robots cost 2 blocks instead of one 4× bigger
+matrix. The factorization runs in float64: a humanoid's light links between heavy ones (a 74 g ankle link) give
+condition numbers float32 Cholesky fails on. (So TF32 matmuls must stay off: they break the system's symmetry.)
 
 Why: solving joints one at a time (Gauss-Seidel), each joint only "feels" its two neighbouring links. The SO-101's
 links weigh ~0.1 kg but hold up the whole arm, so its shoulder bent 5.7° under gravity. A global solve treats the
@@ -210,6 +227,10 @@ motor's rotor makes it act far heavier (MuJoCo calls this armature). At 12 g, th
 - box vs box: **separating axis test** over 15 axes. For a face axis, the contact polygon (reference face ∩ incident
   face) has its corners among 24 candidate features; for an edge axis, the closest points of the two edges.
 - box vs cylinder: sampled rim points and box corners (good enough for wheels bumping blocks).
+- capsules (segments swept by a sphere): plane (the two cap spheres), sphere (closest point on the segment), capsule
+  (closest points of the segments + each end against the other segment, so parallel capsules rest on two points),
+  box (both ends + the segment's deepest point, found by ternary search: the box's signed distance is convex along
+  the segment). Checked against brute-force sampling: depth within 0.06 mm.
 
 ### Speed
 
@@ -411,26 +432,40 @@ success rate per stage (race: won against the teacher). Writes `logs/eval.json` 
 
 ## Part 7: Recordings
 
-`recording.py`. The scene once, then poses per frame:
+`recording.py`. One self-contained file per recording: everything a viewer needs, so a recording made on the GPU box
+can be copied anywhere and opened in the frontend (playback mode: pick it from the server's list, "Open…", or drop the
+file anywhere on the page; normal camera controls).
 
 ```
-logs/{name}/scene.json     the scene (shapes, colors, ids)
-logs/{name}/{chunk}.bin    little-endian, 1000 frames per chunk:
-  "SIMR"  seconds_per_frame f32  total_frames u32  frames_in_chunk u32  num_bodies u32
-  per frame: time f32, then num_bodies × (px py pz qw qx qy qz) f32 in scene body order
+logs/{name}.simrec   a gzip stream, little-endian:
+  "SIMREC01"         magic + format version
+  uint32             header length
+  header             JSON, space-padded to a multiple of 4 bytes:
+                       {"scene": the scene, "meshes": [{"name", "vertices": V, "triangles": T}] (blob order),
+                        "seconds_per_frame", "frames": F, "info": {...} facts about the run (a game's score, ...)}
+  meshes             per mesh: V × 3 float32 positions, then T × 3 uint32 indices
+  frames             F × (1 + 7 N) float32: time, then px py pz qw qx qy qz per body in scene order
+```
+
+Bodies may carry `"visuals": [{"mesh", "position", "rotation", "color"}]` (imported robots: the G1's real link meshes,
+STL files under `robot/assets/`, named by that path). The physics ignores them; the recorder embeds every mesh the
+scene uses and the viewer draws them instead of the collision shapes. A G1 recording is ~5 MB for 30 s.
+
+```bash
+# on the GPU box, from back/: record a checkpoint (walk: a scripted command sequence, other stages: --seconds of it)
+python -m ml.record_humanoid --ckpt checkpoints/warehouse_v1.pt --stage bring --name warehouse_bring
+# then on your machine: copy the file and drop it on the page
+scp ubuntu@<gpu>:~/physicsim/logs/warehouse_bring.simrec .
 ```
 
 **Pre-recorded games** (`record_games.py`, run on a GPU): the web demo plays these, so the web server needs no GPU.
-Each is one 60 s race with a random layout, orange = the student VLA, teal = the teacher, knocked-over robots
-respawn. Next to the recording above, each game folder `logs/game_{i}/` holds:
+Each is one 60 s race with a random layout, both robots driven by the teacher, knocked-over robots respawn. Its info
+holds `{"stage": "race", "seconds": 60, "drivers": [orange, teal], "cameras": [camera ids, mosaic order],
+"score": [[time, orange, teal], ...]}` (score at t = 0 and at every change), and `logs/game_{i}.mp4` next to it is
+the 4 robot cameras at 10 Hz as one 2 × 2 mosaic (row-major in "cameras" order), H.264. The server lists as games the
+recordings that have such a video.
 
-```
-game.json     {"stage": "race", "seconds": 60, "drivers": [orange, teal], "cameras": [camera ids, mosaic order],
-               "score": [[time, orange, teal], ...]}   score at t = 0 and at every change
-cameras.mp4   the 4 robot cameras at 10 Hz as one 2 × 2 mosaic (row-major in "cameras" order), H.264
-```
-
-Poses are saved at 30 Hz; a game is ~3 MB. On a CPU the live sim does not run in real time (rendering the robot
+Poses are saved at 30 Hz; a game is ~1.2 MB. On a CPU the live sim does not run in real time (rendering the robot
 cameras takes 90–200 ms per frame), which is why the demo plays recordings.
 
 
@@ -445,12 +480,10 @@ GET  /scenes                    {"scenes": [names]}
 GET  /scenes/{name}             scene JSON
 PUT  /scenes/{name}             save scene JSON
 GET  /prefabs/lekiwi            LeKiwi bodies / joints / cameras at the origin
-GET  /recordings                {"recordings": [names]}
-GET  /recordings/{name}/scene   scene of a recording
-GET  /recordings/{name}/{chunk} binary chunk
-GET  /games                     {"games": [names]} recordings that are pre-recorded games
-GET  /recordings/{name}/game    a game's game.json
-GET  /recordings/{name}/cameras a game's cameras.mp4
+GET  /recordings                {"recordings": [names]} every logs/{name}.simrec
+GET  /recordings/{name}         the recording file (Part 7)
+GET  /games                     {"games": [names]} recordings that are pre-recorded games (have a camera video)
+GET  /recordings/{name}/cameras a game's camera mosaic (logs/{name}.mp4)
 WS   /ws                        live simulation
 ```
 
@@ -476,7 +509,7 @@ tipped past 60°) for 3 s respawns at its start pose (live sessions only; traini
 shows the stage, your command, the score and whose goal currently holds.
 
 **The frontend** (`front/`) opens in the **simple view**, a demo for people who don't know the project: it plays
-the pre-recorded games back to back (teacher vs teacher races; the scoreboard captions come from game.json "drivers") with a scoreboard, a countdown, the four robot camera
+the pre-recorded games back to back (teacher vs teacher races; the scoreboard captions come from the recording info's "drivers") with a scoreboard, a countdown, the four robot camera
 feeds and the rules in one sentence. One button pauses it; it says the games are pre-recorded because the web server
 has no GPU. No panels, no selection, no joint or camera markers (`src/demo.js`).
 **Advanced** (toggle top right) is the full editor: CAD-style, scene tree left, properties right, toolbar on top.
@@ -489,6 +522,72 @@ has no GPU. No panels, no selection, no joint or camera markers (`src/demo.js`).
 - **Playback**: pick a recording, play / pause / speed / scrub.
 - **Camera**: left-drag orbits, ctrl+left-drag or right-drag pans (camera and pivot together), wheel zooms at a
   constant speed (pushing the pivot ahead when you pass it).
+
+---
+
+## Part 9: The Humanoid Warehouse Course
+
+A Unitree G1 (29 joints, 1.32 m, 33 kg) learns the job warehouse humanoids are paid for (Agility's Digit moves totes
+for GXO): pick up boxes and carry them to a platform. One model is trained end to end and is the model that would be
+deployed: no scripted expert, no teacher to distill.
+
+**Robot** (`robot/mjcf.py`, `robot/g1.py`). Imported from MuJoCo Menagerie's `g1_mjx.xml`: masses, inertias, joint
+axes / limits / torque limits / PD gains, its simplified collision capsules, and its real link meshes for viewers. The
+motors' armature (rotor inertia through the gearbox, e.g. 0.007 kg·m² at an ankle whose link is 1e-5) is added to
+each child link about its hinge. Each foot touches the floor with a box. The head camera (RealSense D435 spot, 30°
+down, 90° fov, 64 × 64) sees the boxes, pedestals and platform.
+
+**Carry pose.** A search over the arm joints (within their limits, through the model's kinematics) for hands 0.37 m
+ahead at 0.725 m height, ±0.142 m apart, palms facing, forearms behind the box. The robot is built in it: actions are
+offsets from it, and a 0.26 m box between the hands is squeezed 2.3 cm from the start. Pedestals and the platform are
+as tall as a held box's bottom, so boxes are picked and placed without bending.
+
+**Control** (`robot/humanoid.py`). 50 Hz; one world step of 20 ms with 5 substeps (4 ms, like MuJoCo Playground).
+Action = joint target offsets from the carry pose, × 0.25 rad, tracked by each motor's PD. Proprio = what the real
+robot senses: pelvis gyro and gravity direction (IMU), joint angles and speeds, last action, gait clock, with noise.
+Random pushes (≤ 0.5 m/s) every ~5 s.
+
+**Stages** (`robot/warehouse.py`, one arena: four colored 1 kg boxes on pedestals, the platform at the arena's end):
+
+| stage | command | task |
+|---|---|---|
+| walk | "warehouse walk forward +0.50 left +0.00 turn -0.25" | track the velocity (Playground G1 joystick rewards: tracking, posture, a reference foot-height gait at 1.25 Hz, air time) |
+| pick | "warehouse pick up the red box" | lift the named box 10 cm off its pedestal, held between both hands |
+| bring | "warehouse bring the red box home" | that box onto the platform; half the episodes start with it in the hands (reverse curriculum) |
+| speedrun | "warehouse bring all boxes home" | every box onto the platform, fast |
+
+Rewards: the locomotion terms (posture, gait) in every stage, potential shaping toward the target box (walk up to it,
+hands on it, lift it / carry it to the platform), +10 for a success or a delivered box, −10 for dropping a box to the
+floor, −25 for falling (more than a success: a fall restarts next to a fresh box, so lunge-grab-fall must not pay).
+The command's first word is always the course's name, the game being played.
+
+**Model** (`ml/humanoid_policy.py`). Single-stage asymmetric actor-critic with a state estimator inside the actor
+(Ji et al. 2022, "Concurrent training of a control policy and a state estimator"; Gu et al. 2024, "Denoising World
+Model Learning"):
+
+```
+policy (deployed)  tokens: [act] + 16 steps of proprio + 8 command words + 16 image patches (conv stem)
+                   -> 4-layer transformer (width 192) -> z = the [act] token's output
+                   z -> action head (gaussian mean, learned per-joint std)
+                   z -> state decoder (training only): base velocity, height, feet, boxes, platform, pedestals
+                        (regression on the simulator's true values, so z has to carry what the robot can't sense)
+critic (training)  MLP on the privileged state (exact, noise-free)
+```
+
+Image tokens are always present: blind stages skip rendering and pass only their position embeddings, and the conv
+stem's last layer starts at zero, so a model trained blind acts the same when the camera turns on.
+
+**Training** (`ml/train_humanoid.py`). PPO (rsl_rl settings: adaptive learning rate from the KL, clipped value loss,
+time-out bootstrapping; 4 optimizer steps per epoch with gradient accumulation), 4096 envs × 24 steps per iteration.
+`--init` starts from an earlier run: matching tensors carry over, the vocabulary grows, normalizer statistics of
+inputs that never varied restart, and the critic trains alone for a few iterations first. On the A100: physics ~35k
+steps/s, the camera 10.6k frames/s at 64 px (rendered at 10 Hz), training ~6–7k steps/s with the camera.
+
+**What we learned on the way** (an earlier sword course, since removed): unitree_rl_gym's walking rewards clipped to
+~0 and stalled, Playground's walked in ~900 iterations; TF32 matmuls break the joint solve's symmetry; a stage that
+pays more for its goal than a fall costs teaches lunging; zero-sum self-play settled into a standoff until the
+shaping rewarded attacking; 80 small optimizer steps per iteration forced the adaptive learning rate down to 1e-5
+(gradient accumulation fixed it).
 
 ---
 

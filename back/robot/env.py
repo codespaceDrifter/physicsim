@@ -26,7 +26,7 @@ ACTION_DIM = len(ACTUATORS)
 
 def static_box(id, size, pos, color, collide=True):
     # scene JSON body for an immovable box (ground markers, walls)
-    return {'id': id, 'shape': {'type': 'box', 'size': size}, 'position': pos, 'rotation': [1.0, 0.0, 0.0, 0.0],
+    return {'id': id, 'shapes': [{'type': 'box', 'size': size, 'position': [0.0, 0.0, 0.0], 'rotation': [1.0, 0.0, 0.0, 0.0]}], 'position': pos, 'rotation': [1.0, 0.0, 0.0, 0.0],
             'velocity': [0.0, 0.0, 0.0], 'angular_velocity': [0.0, 0.0, 0.0], 'density': 1000.0, 'static': True,
             'collide': collide, 'group': 0, 'friction': 0.8, 'restitution': 0.0, 'color': color}
 

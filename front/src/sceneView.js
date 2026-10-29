@@ -64,19 +64,20 @@ export function rebuild(scene) {
   for (const map of Object.values(objectsById)) map.clear();
   if (!scene) return;
 
+  // {mesh name: BufferGeometry} built once per rebuild, shared by every body showing that mesh
+  const geometries = {};
   // ---------- bodies: group at the body pose holding the mesh + edge lines ----------
   for (const body of scene.bodies) {
     const group = new THREE.Group();
     group.position.set(...body.position);
     const [qw, qx, qy, qz] = body.rotation;
     group.quaternion.set(qx, qy, qz, qw);
-    group.userData.isPlane = body.shape.type === 'plane';
+    group.userData.isPlane = body.shapes.some(sh => sh.type === 'plane');
     root.add(group);
     bodyGroups.push(group);
     objectsById.body.set(body.id, group);
-    const shape = body.shape;
 
-    if (shape.type === 'plane') {
+    if (group.userData.isPlane) {
       const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(400, 400),
         new THREE.MeshStandardMaterial({ color: body.color, roughness: 1, metalness: 0 }),
@@ -102,11 +103,33 @@ export function rebuild(scene) {
       continue;
     }
 
-    let geometry;
-    if (shape.type === 'box') geometry = new THREE.BoxGeometry(...shape.size);
-    else if (shape.type === 'sphere') geometry = new THREE.SphereGeometry(shape.radius, 48, 24);
-    else if (shape.type === 'cylinder') geometry = new THREE.CylinderGeometry(shape.radius, shape.radius, shape.height, 48);
-    else throw new Error(`unknown shape type "${shape.type}" on body "${body.id}"`);
+    // visual meshes (an imported robot's real link shapes) in place of the collision shapes, when they're loaded
+    if (body.visuals?.length && body.visuals.every(v => v.mesh in app.meshes)) {
+      const materials = []; // [MeshStandardMaterial] one per visual, for the selection highlight
+      for (const v of body.visuals) {
+        if (!(v.mesh in geometries)) {
+          // indexed geometry from the recording's arrays, smooth normals
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.BufferAttribute(app.meshes[v.mesh].vertices, 3));
+          geometry.setIndex(new THREE.BufferAttribute(app.meshes[v.mesh].indices, 1));
+          geometry.computeVertexNormals();
+          geometries[v.mesh] = geometry;
+        }
+        const material = new THREE.MeshStandardMaterial({ color: v.color, roughness: 0.5, metalness: 0.1 });
+        const mesh = new THREE.Mesh(geometries[v.mesh], material);
+        mesh.position.set(...v.position);
+        const [vw, vx, vy, vz] = v.rotation;
+        mesh.quaternion.set(vx, vy, vz, vw);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.userData = { kind: 'body', id: body.id };
+        pickables.push(mesh);
+        materials.push(material);
+        group.add(mesh);
+      }
+      group.userData.setSelected = (on) => { for (const m of materials) m.emissive.set(on ? 0x0d2747 : 0x000000); };
+      continue;
+    }
 
     const material = new THREE.MeshStandardMaterial({
       color: body.color,
@@ -122,42 +145,57 @@ export function rebuild(scene) {
       polygonOffsetFactor: body.collide ? 1 : -4,
       polygonOffsetUnits: body.collide ? 1 : -16,
     });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.castShadow = body.collide;
-    mesh.receiveShadow = true;
-    mesh.userData = { kind: 'body', id: body.id };
-    pickables.push(mesh);
-
-    // edge lines that make the orientation visible: box edges, sphere great circles, cylinder caps + spokes + side lines
-    let edgeGeometry;
-    if (shape.type === 'box') {
-      edgeGeometry = new THREE.EdgesGeometry(geometry);
-    } else {
-      const points = []; // [x, y, z, x, y, z, ...] pairs of segment endpoints
-      const N = 64;
-      // closed loop through point(angle)
-      const ring = (point) => {
-        for (let i = 0; i < N; i++) points.push(...point((i / N) * 2 * Math.PI), ...point(((i + 1) / N) * 2 * Math.PI));
-      };
-      const r = shape.radius;
-      if (shape.type === 'sphere') {
-        ring(a => [r * Math.cos(a), r * Math.sin(a), 0]);
-        ring(a => [r * Math.cos(a), 0, r * Math.sin(a)]);
-        ring(a => [0, r * Math.cos(a), r * Math.sin(a)]);
-      } else {
-        const h = shape.height / 2;
-        for (const y of [-h, h]) {
-          ring(a => [r * Math.cos(a), y, r * Math.sin(a)]);
-          points.push(-r, y, 0, r, y, 0, 0, y, -r, 0, y, r);
-        }
-        for (const a of [0, 0.5 * Math.PI, Math.PI, 1.5 * Math.PI]) {
-          points.push(r * Math.cos(a), -h, r * Math.sin(a), r * Math.cos(a), h, r * Math.sin(a));
-        }
-      }
-      edgeGeometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-    }
     const edgeMaterial = new THREE.LineBasicMaterial({ color: EDGE_COLOR, transparent: true, opacity: 0.7 });
-    group.add(mesh, new THREE.LineSegments(edgeGeometry, edgeMaterial));
+    // one mesh + edge lines per shape, at the shape's pose in the body frame
+    for (const shape of body.shapes) {
+      let geometry;
+      if (shape.type === 'box') geometry = new THREE.BoxGeometry(...shape.size);
+      else if (shape.type === 'sphere') geometry = new THREE.SphereGeometry(shape.radius, 48, 24);
+      else if (shape.type === 'cylinder') geometry = new THREE.CylinderGeometry(shape.radius, shape.radius, shape.height, 48);
+      else if (shape.type === 'capsule') geometry = new THREE.CapsuleGeometry(shape.radius, shape.length, 12, 32);
+      else throw new Error(`unknown shape type "${shape.type}" on body "${body.id}"`);
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = body.collide;
+      mesh.receiveShadow = true;
+      mesh.userData = { kind: 'body', id: body.id };
+      pickables.push(mesh);
+
+      // edge lines that make the orientation visible: box edges, sphere great circles, cylinder / capsule rings + side lines
+      let edgeGeometry;
+      if (shape.type === 'box') {
+        edgeGeometry = new THREE.EdgesGeometry(geometry);
+      } else {
+        const points = []; // [x, y, z, x, y, z, ...] pairs of segment endpoints
+        const N = 64;
+        // closed loop through point(angle)
+        const ring = (point) => {
+          for (let i = 0; i < N; i++) points.push(...point((i / N) * 2 * Math.PI), ...point(((i + 1) / N) * 2 * Math.PI));
+        };
+        const r = shape.radius;
+        if (shape.type === 'sphere') {
+          ring(a => [r * Math.cos(a), r * Math.sin(a), 0]);
+          ring(a => [r * Math.cos(a), 0, r * Math.sin(a)]);
+          ring(a => [0, r * Math.cos(a), r * Math.sin(a)]);
+        } else {
+          const h = (shape.type === 'cylinder' ? shape.height : shape.length) / 2;
+          for (const y of [-h, h]) {
+            ring(a => [r * Math.cos(a), y, r * Math.sin(a)]);
+            if (shape.type === 'cylinder') points.push(-r, y, 0, r, y, 0, 0, y, -r, 0, y, r);
+          }
+          for (const a of [0, 0.5 * Math.PI, Math.PI, 1.5 * Math.PI]) {
+            points.push(r * Math.cos(a), -h, r * Math.sin(a), r * Math.cos(a), h, r * Math.sin(a));
+          }
+        }
+        edgeGeometry = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+      }
+      const holder = new THREE.Group();
+      holder.position.set(...shape.position);
+      const [sw, sx, sy, sz] = shape.rotation;
+      holder.quaternion.set(sx, sy, sz, sw);
+      holder.add(mesh, new THREE.LineSegments(edgeGeometry, edgeMaterial));
+      group.add(holder);
+    }
     group.userData.setSelected = (on) => {
       material.emissive.set(on ? 0x0d2747 : 0x000000);
       edgeMaterial.color.set(on ? SELECT_COLOR : EDGE_COLOR);

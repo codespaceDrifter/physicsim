@@ -2,12 +2,14 @@
 
 export const LIST_KEY = { body: 'bodies', joint: 'joints', camera: 'cameras' }; // {kind: scene key}
 
-// default shapes for new bodies / shape type changes, all 0.2 m tall
+// default shapes for new bodies / shape type changes, all 0.2 m tall, at the body origin
+const ORIGIN = { position: [0, 0, 0], rotation: [1, 0, 0, 0] };
 export const DEFAULT_SHAPES = {
-  box: { type: 'box', size: [0.2, 0.2, 0.2] },
-  sphere: { type: 'sphere', radius: 0.1 },
-  cylinder: { type: 'cylinder', radius: 0.1, height: 0.2 },
-  plane: { type: 'plane' },
+  box: { type: 'box', size: [0.2, 0.2, 0.2], ...ORIGIN },
+  sphere: { type: 'sphere', radius: 0.1, ...ORIGIN },
+  cylinder: { type: 'cylinder', radius: 0.1, height: 0.2, ...ORIGIN },
+  capsule: { type: 'capsule', radius: 0.05, length: 0.1, ...ORIGIN },
+  plane: { type: 'plane', ...ORIGIN },
 }; // {shape type: shape}
 
 export function findItem(scene, kind, id) {
@@ -28,7 +30,7 @@ export function uniqueId(list, base) {
 export function makeBody(id, shape, position) {
   return {
     id,
-    shape,
+    shapes: [shape],
     position,
     rotation: [1, 0, 0, 0],
     velocity: [0, 0, 0],

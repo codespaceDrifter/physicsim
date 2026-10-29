@@ -3,12 +3,11 @@
 # driven by --orange / --teal, knocked-over robots respawn (live.py).
 #
 # run from back/ on a GPU:  python -m record_games --games 6
-# writes logs/game_{i}/  scene.json, {chunk}.bin   body poses at FPS (recording.py format)
-#                        game.json    {"stage": "race", "seconds": 60, "drivers": [orange, teal],
-#                                      "cameras": [camera ids, mosaic order], "score": [[time, orange, teal], ...]}
-#                                      score: at t = 0 and at every change
-#                        cameras.mp4  the 4 robot cameras at 10 Hz as one 2 x 2 mosaic (row-major in "cameras" order:
-#                                     orange front, orange wrist / teal front, teal wrist), H.264
+# writes logs/game_{i}.simrec  body poses at FPS (recording.py format), info: {"stage": "race", "seconds": 60,
+#                               "drivers": [orange, teal], "cameras": [camera ids, mosaic order],
+#                               "score": [[time, orange, teal], ...]} (score: at t = 0 and at every change)
+#        logs/game_{i}.mp4     the 4 robot cameras at 10 Hz as one 2 x 2 mosaic (row-major in "cameras" order:
+#                              orange front, orange wrist / teal front, teal wrist), H.264
 import argparse
 import json
 import subprocess
@@ -34,6 +33,7 @@ seconds = STAGE_STEPS['race'] * ACTION_REPEAT * scene['settings']['dt']
 cams = scene['cameras']
 W, H = cams[0]['width'], cams[0]['height']
 assert len(cams) == 4 and all((c['width'], c['height']) == (W, H) for c in cams)
+LOGS_DIR.mkdir(exist_ok=True)
 for g in range(args.games):
     s = LiveSession(scene, device)
     env, w = s.env, s.world
@@ -46,12 +46,12 @@ for g in range(args.games):
     s.drivers = [(make_driver(args.orange, device), [0]), (make_driver(args.teal, device), [1])]
     name = f'game_{g}'
     total = int(round(seconds * FPS)) + 1
-    rec = Recorder(name, w.scene, 1 / FPS, total)
+    rec = Recorder(name, w.scene, 1 / FPS)
     # [[time, orange, teal]] score at t = 0 and at every change
     score = [[0.0, *env.score()[0].tolist()]]
     video = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-s', f'{2 * W}x{2 * H}',
                               '-r', str(round(1 / (CAMERA_EVERY * w.dt))), '-i', '-', '-c:v', 'libx264', '-crf', '16',
-                              '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(LOGS_DIR / name / 'cameras.mp4')],
+                              '-pix_fmt', 'yuv420p', '-movflags', '+faststart', str(LOGS_DIR / f'{name}.mp4')],
                              stdin=subprocess.PIPE)
     for i in range(total):
         while w.time < i / FPS - 1e-9:
@@ -66,6 +66,6 @@ for g in range(args.games):
             score.append([round(i / FPS, 3), *now])
     video.stdin.close()
     assert video.wait() == 0, 'ffmpeg failed'
-    json.dump({'stage': 'race', 'seconds': seconds, 'drivers': [args.orange, args.teal], 'cameras': [c['id'] for c in cams],
-               'score': score}, open(LOGS_DIR / name / 'game.json', 'w'))
+    rec.save({'stage': 'race', 'seconds': seconds, 'drivers': [args.orange, args.teal], 'cameras': [c['id'] for c in cams],
+              'score': score})
     print(f'{name}: final score orange {score[-1][1]} : {score[-1][2]} teal', flush=True)

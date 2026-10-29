@@ -71,7 +71,7 @@ def scene(stage):
     assert stage in STAGES, f'unknown stage {stage}'
     L, W = ARENA
     ground = static_box('ground', None, [0.0, 0.0, 0.0], '#9a9a9a')
-    ground['shape'] = {'type': 'plane'}
+    ground['shapes'] = [{'type': 'plane', 'position': [0.0, 0.0, 0.0], 'rotation': [1.0, 0.0, 0.0, 0.0]}]
     ground['friction'] = 1.0
     walls = [static_box('wall/north', [L + 2 * WALL_T, WALL_H, WALL_T], [0.0, WALL_H / 2, -(W + WALL_T) / 2], '#5a5f66'),
              static_box('wall/south', [L + 2 * WALL_T, WALL_H, WALL_T], [0.0, WALL_H / 2, (W + WALL_T) / 2], '#5a5f66'),

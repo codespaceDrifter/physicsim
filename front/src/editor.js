@@ -111,7 +111,7 @@ export async function insertLekiwi() {
     return prefix + id.slice('lekiwi/'.length);
   };
   // place it 0.6 m beyond the farthest existing body along +z so it doesn't overlap anything
-  const others = app.scene.bodies.filter(b => b.shape.type !== 'plane');
+  const others = app.scene.bodies.filter(b => b.shapes.every(sh => sh.type !== 'plane'));
   const offsetZ = others.length ? Math.max(...others.map(b => b.position[2])) + 0.6 : 0;
 
   for (const body of prefab.bodies) {
